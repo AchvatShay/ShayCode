@@ -1,4 +1,4 @@
-function [roiActivity, roiActivityNames] = loadActivityFileFromTPA(activityfileTPAFolder, selectedROI, outputpath)
+function [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromTPA(activityfileTPAFolder, selectedROI, outputpath)
     TPAList = dir(strcat(activityfileTPAFolder,'\TPA*'));
 
     fileNumRoi = length(TPAList);
@@ -42,16 +42,43 @@ function [roiActivity, roiActivityNames] = loadActivityFileFromTPA(activityfileT
         end
     end
 
+    tr_frame_count = dataSize;
+    
     roinames = activity.Properties.VariableNames;
     roi_index = 1;
-    for index = 1:length(roinames)
-        if isempty(selectedROI) || ~isempty(find(strcmpi(selectedROI, roinames{index}), 1))
-           currentROIActivity = activity.(roinames{index});
-           
-           roiActivity(:, roi_index) = currentROIActivity;
-           roiActivityNames{roi_index} = roinames{index};
-           roi_index = roi_index + 1;
+    for index = 1:length(selectedROI)
+        sel_results = [];
+        if contains(selectedROI(index), '&')
+            str_roi = strsplit(selectedROI{index}, '&');
+            sel_results(1) = find(contains(roinames, str_roi(1)));
+            sel_results(2) = find(contains(roinames, str_roi(2)));
+        else
+            sel_results = find(contains(roinames, selectedROI{index}));
         end
+         
+        if ~isempty(sel_results)
+            if length(sel_results) == 2
+                currentROIActivity = (activity.(roinames{sel_results(1)}) + activity.(roinames{sel_results(2)})) ./ 2; 
+                currentName = selectedROI{index};
+            elseif length(sel_results) == 1
+                currentROIActivity = activity.(roinames{sel_results(1)});
+                currentName = roinames{sel_results(1)};
+            else
+                error();
+            end
+            
+            roiActivity(:, roi_index) = currentROIActivity;
+            roiActivityNames{roi_index} = currentName;
+            roi_index = roi_index + 1;
+        end
+        
+%         if isempty(selectedROI) || ~isempty(find(strcmpi(selectedROI, roinames{index}), 1))
+%            currentROIActivity = activity.(roinames{index});
+%            
+%            roiActivity(:, roi_index) = currentROIActivity;
+%            roiActivityNames{roi_index} = roinames{index};
+%            roi_index = roi_index + 1;
+%         end
     end
     
     writetable(activity,fullfile(outputpath, 'activityFileAsTable.csv'))

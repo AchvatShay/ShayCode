@@ -1,4 +1,4 @@
-function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpath)
+function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpath, doComboForCloseRoi)
     data = importdata(neuronTreeFile);
     rootNodeID = [];
 
@@ -30,10 +30,16 @@ function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpat
         else
             rootNodeID = nodesID(index - 1);
         end
+        
+        if contains(nodesLabel(index-1), 'roi')
+            nodesColor(index-1, :) = [1, 0, 0];
+        else
+             nodesColor(index-1, :) = [0, 0, 1];
+        end
     end
     
     EdgeTable = table(edgeArray, edgeDistFromParent','VariableNames',{'EndNodes', 'Weight'});
-    NodeTable = table(nodesID', nodesLabel', nodesX', nodesY', nodesZ', nodesType', nodesDepth,'VariableNames',{'ID','Name', 'X', 'Y', 'Z', 'Type', 'Depth'});
+    NodeTable = table(nodesID', nodesLabel', nodesX', nodesY', nodesZ', nodesType', nodesDepth, nodesColor,'VariableNames',{'ID','Name', 'X', 'Y', 'Z', 'Type', 'Depth', 'ColorN'});
     gRoi = graph(EdgeTable, NodeTable);
     
     gRoi = setDepth(gRoi, rootNodeID, 0, 1);
@@ -41,8 +47,16 @@ function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpat
 %     selectedROINames = setSubGraph1Depth(gRoi, rootNodeID);
     selectedROI = gRoi.Nodes(contains(gRoi.Nodes.Name, 'roi'), :);
     
+    if doComboForCloseRoi
+        
+        [gRoi, indexNodesList] = combRoiClose(gRoi, rootNodeID, rootNodeID, zeros(1, max(gRoi.Nodes.ID)));
+        
+        selectedROI = gRoi.Nodes(contains(gRoi.Nodes.Name, 'roi') & (~contains(gRoi.Nodes.Name, 'old')), :);
+   
+    end
+    
     figGraph = figure;
-    plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight);
+    plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', gRoi.Nodes.ColorN);
     mysave(figGraph, [outputpath, '\GraphWithROI']);
     
     plotTree(gRoi, outputpath);
@@ -57,6 +71,55 @@ function gRoi = setDepth(gRoi, rootNodeID, depthBefore, indexB)
             gRoi = setDepth(gRoi, nid(index), depthBefore, index);
         else
             gRoi = setDepth(gRoi, nid(index), depthBefore + 1, index);    
+        end
+    end
+end
+
+
+function [gRoi, indexNodesList] = combRoiClose(gRoi, fNodeID, sNodeID, indexNodesList)
+    if contains(gRoi.Nodes.Name(fNodeID), 'roi') && contains(gRoi.Nodes.Name(sNodeID), 'roi')
+        if gRoi.Nodes(fNodeID, :).Depth(1,1) == gRoi.Nodes(sNodeID, :).Depth(1,1)
+            indexOut = findedge(gRoi,fNodeID, sNodeID);
+            if gRoi.Edges.Weight(indexOut) <= 30
+                gRoi.Nodes(fNodeID, :).Name = {[gRoi.Nodes.Name{fNodeID} '&' gRoi.Nodes.Name{sNodeID}]};
+                gRoi.Nodes(fNodeID, :).X = (gRoi.Nodes(fNodeID, :).X + gRoi.Nodes(sNodeID, :).X) ./ 2;
+                gRoi.Nodes(fNodeID, :).Y = (gRoi.Nodes(fNodeID, :).Y + gRoi.Nodes(sNodeID, :).Y) ./ 2;
+                gRoi.Nodes(fNodeID, :).Z = (gRoi.Nodes(fNodeID, :).Z + gRoi.Nodes(sNodeID, :).Z) ./ 2;
+                
+                gRoi.Nodes(sNodeID, :).Name = {['old' gRoi.Nodes.Name{sNodeID}]};
+                
+                tOut = neighbors(gRoi,sNodeID);
+                tOut(tOut == fNodeID) = [];
+                
+                gRoi = rmedge(gRoi,ones(1, length(tOut)) * sNodeID,tOut);
+                gRoi = rmedge(gRoi, fNodeID, sNodeID);
+                
+                tOutSec = neighbors(gRoi,fNodeID);
+                tOutSec(tOutSec == sNodeID) = [];
+                gRoi = rmedge(gRoi,tOutSec, ones(1, length(tOutSec)) * fNodeID);
+                
+                tOut = [tOut, tOutSec];
+                wOut = zeros(1, length(tOut));
+                sOutNew = ones(1, length(tOut)) * fNodeID;
+                
+                for i = 1:length(tOut)
+                    wOut(i) = norm([gRoi.Nodes.X(tOut(i)), gRoi.Nodes.Y(tOut(i)), gRoi.Nodes.Z(tOut(i))] -...
+                        [gRoi.Nodes.X(fNodeID), gRoi.Nodes.Y(fNodeID), gRoi.Nodes.Z(fNodeID)]);
+                end
+                
+                gRoi = addedge(gRoi,sOutNew,tOut,wOut);
+%                 gRoi = rmnode(gRoi,sNodeID);
+                indexNodesList(sNodeID) = 1;
+                sNodeID = fNodeID;
+            end
+        end
+    end
+    
+    indexNodesList(sNodeID) = 1;
+    nid = neighbors(gRoi,sNodeID);
+    for index = 1:length(nid)
+        if indexNodesList(nid(index)) ~= 1
+            [gRoi, indexNodesList] = combRoiClose(gRoi, sNodeID, nid(index), indexNodesList);
         end
     end
 end

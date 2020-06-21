@@ -8,6 +8,9 @@ if isempty(roiNum)
     roiNum=sscanf(fullstr, 'ROI:Z:2:%d');
 end
 if isempty(roiNum)
+    roiNum=sscanf(fullstr, 'ROI %2d:NZ-1');
+end
+if isempty(roiNum)
     roiNum=sscanf(fullstr, 'AROI:Z1:%d');
 end
 if isempty(roiNum)
