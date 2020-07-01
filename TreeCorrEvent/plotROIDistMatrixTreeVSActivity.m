@@ -101,6 +101,10 @@ function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, ro
     
     %     coutI = 1;
     nodesColor = zeros(length(gRoi.Nodes.Name),3);
+    tempC = zeros(length(classesM(classesM ~= -1)), 3);
+    tempC(:, 1) = 1;
+    nodesColor(classesM(classesM ~= -1), :) = tempC;
+    
     for clr = 1:length(classesM)
         for i = 1:length(mainTreeBranchROI)
             if mainTreeBranchROI(i) == classesM(clr)
@@ -113,6 +117,7 @@ function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, ro
      
     figGraph = figure;
     plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
+    title({'Number of subtree ', num2str(length(classesM))});
     mysave(figGraph, [outputpath, '\GraphWithROI_' num2str(length(classesM))]);
    
     

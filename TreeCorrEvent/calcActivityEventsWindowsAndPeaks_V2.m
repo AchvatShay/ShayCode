@@ -1,4 +1,4 @@
-function [all_locationFull_start, all_locationFull_end, all_locationFull_pks, all_locationFull_cluster] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, threshold_std, PeakWidth, clusterCount, histBinWidth, samplingRate, tr_frame_count, aV)
+function [all_locationFull_start, all_locationFull_end, all_locationFull_pks, all_locationFull_cluster] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames)
     
     all_locationFull_start = [];
     
@@ -12,7 +12,7 @@ function [all_locationFull_start, all_locationFull_end, all_locationFull_pks, al
     
     for i = 1:size(roiActivity, 2)
         ac_curr = roiActivity(:, i);
-        [all_locationFull_start{i}, all_locationFull_end{i}, all_locationFull_pks{i}, all_locationFull_H{i}, all_locationFull_cluster{i}] = calcRoiEventDetectorByMLSpike(ac_curr, 1 / samplingRate, tr_frame_count, aV(i), outputpath, i, clusterCount);
+        [all_locationFull_start{i}, all_locationFull_end{i}, all_locationFull_pks{i}, all_locationFull_H{i}, all_locationFull_cluster{i}] = calcRoiEventDetectorByMLSpike(ac_curr, 1 / samplingRate, tr_frame_count, aV(i), outputpath, i, clusterCount, roiActivityNames(i));
     end
 
 %     idx = [];

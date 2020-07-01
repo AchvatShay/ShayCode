@@ -1,66 +1,21 @@
 function mainRunnerNeuronTreeAndActivityAnalysis_V2
-    neuronTreePathSWC = "E:\Dropbox (Technion Dropbox)\Yara\Analysis\Yara's Data For Shay\SM04\08.18.19\08.18.19_Tuft_new_05.04.20\swcFiles_Without9\neuron_1.swc";
+    neuronTreePathSWC = "E:\Dropbox (Technion Dropbox)\Yara\Analysis\Yara's Data For Shay\SM01\10.22.19_Tuft\10.22.19_Tuft_swcFiles\neuron_3.swc";
     
     activityByCSV = false;
     neuronActiityPathCSV = 'D:\Shay\work\N\SM04\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv';
-    neuronActivityPathTPA = "E:\Dropbox (Technion Dropbox)\Yara\Analysis\Yara's Data For Shay\SM04\08.18.19\08.18.19_Tuft_new_05.04.20\18_08_19";
+    neuronActivityPathTPA = "E:\Dropbox (Technion Dropbox)\Yara\Analysis\SM01\10.22.19_Tuft";
     
-    outputpath = "E:\Dropbox (Technion Dropbox)\Test\Tuft_new_05.04.20\ByStartToPeak";
+    outputpath = "E:\Dropbox (Technion Dropbox)\Yara\Analysis\Yara's Data For Shay\comparison event detection\NewResults\SM01\10.22.19_Tuft\Ne_3\V4_withfilter_onecluster";
     outputpath = char(outputpath);
-    
+    mkdir(outputpath);
+   
 %     Can be Euclidean OR ShortestPath = ( Between 2 roi according to the tree path )
     roiTreeDistanceFunction = 'ShortestPath';
     
 %     Can be WindowEventFULLPearson OR
 %     WindoEventToPeakPearson OR PeaksPearson
     roiActivityDistanceFunction = 'WindoEventToPeakPearson';
-        
-    threshold_std = 3;
-    PeakWidth = 3;
-    clusterCount = 3;
-    histBinWidth = 0.01;
-    
-    roi_count = 19;
-    aV = ones(1, roi_count)*0.2;
-    aV(1) = 0.3;
-% %     aV(5) = 0.2;
-% %     aV(9) = 0.4;
-%     aV(17) = 0.1;
-%     aV(18) = 0.1;
-%     aV(19) = 0.1;
-%     aV(14) = 0.15;
-%     aV(4) = 0.15;
-%     aV(11) = 0.1;
-%     aV(8) = 0.2;
-%     aV(5) = 0.3;
-%     aV(12) = 0.15;
-%     aV(13) = 0.1;
-%     aV(15) = 0.15;
-%     
-
-%     aV(5) = 0.2;
-%     aV(9) = 0.4;
-%     aV(1) = 0.3;
-    aV(17) = 0.1;
-    aV(18) = 0.1;
-    aV(19) = 0.1;
-    aV(14) = 0.15;
-    aV(4) = 0.15;
-    aV(11) = 0.1;
-    aV(12) = 0.15;
-    aV(13) = 0.1;
-    aV(15) = 0.15;
-   
-
-
-%     Trial Number To plot with Tree
-    trialNumber = [1, 2] ;
-    samplingRate = 20;
-    time_sec_of_trial = 12;
-        
-    DeconvFiltDur           = .4;       % smoothing filter duration in sec
-        
-    doActivityLowFilter = false;
+      
     doComboForCloseRoi = false;
     
     firstDepthCompare = 1;
@@ -74,14 +29,31 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     selectedROISplitDepth1 = ones(length(selectedROI), 1) * -1;
     selectedROISplitDepth1 = getSelectedROISplitBranchID(gRoi, firstDepthCompare, selectedROISplitDepth1, selectedROI);   
     
+    clusterCount = 1;
+    
+    roi_count = length(selectedROI);
+    aV = ones(1, roi_count)*0.35;
+    aV(6) = 0.15;
+    
+    DeconvFiltDur           = .4;       % smoothing filter duration in sec       
+    filter_forROI = ones(1, roi_count) * 1;
+    
+%     Trial Number To plot with Tree
+
+    save([outputpath '\runParametes'],'aV', 'roi_count', 'filter_forROI', 'DeconvFiltDur');
+
+    trialNumber = [1, 2] ;
+    samplingRate = 30;
+    time_sec_of_trial = 12;
+        
+    
     if (activityByCSV)
         %     load roi activity file
         [roiActivity, roiActivityNames] = loadActivityFile(neuronActiityPathCSV, selectedROI);
     else
         [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromTPA(neuronActivityPathTPA, selectedROI, outputpath);
     end
-        
-    
+          
 %     Calc Distance Matrix for ROI in Tree
     switch(roiTreeDistanceFunction)
         case 'Euclidean'
@@ -92,7 +64,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     
 %     Calc Activity Events Window
    
-    [all_locationFull_start, all_locationFull_end, all_locationFull_pks, activityClusterValue] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, threshold_std, PeakWidth, clusterCount, histBinWidth, samplingRate, tr_frame_count, aV);
+    [all_locationFull_start, all_locationFull_end, all_locationFull_pks, activityClusterValue] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames);
 
     all_event_struct.end = all_locationFull_end;
     
@@ -107,29 +79,33 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
 %     totalTrialTime = samplingRate * time_sec_of_trial;
 %     plotTreeAndActivityForTrial(trialNumber, totalTrialTime, roiSortedByCluster, roiActivity, roiActivityNames, selectedROI, outputpath, locationPeaks, windowFULL, roiLinkage);
 %     
-    
-    if doActivityLowFilter
-        sampFreq        = samplingRate;
-        filtDur         = DeconvFiltDur * sampFreq;      % filter duration in sec
-        filtLenH        = ceil(filtDur/2);
-        filtLen         = filtLenH*2;
 
-        filtSmooth          = hamming(filtLen);
-        filtSmooth          = filtSmooth./sum(filtSmooth);
-        
-        
-        for i_activity = 1:size(roiActivity, 2)
+
+%     Filter ROI activity if needed
+%     
+    sampFreq        = samplingRate;
+    filtDur         = DeconvFiltDur * sampFreq;      % filter duration in sec
+    filtLenH        = ceil(filtDur/2);
+    filtLen         = filtLenH*2;
+
+    filtSmooth          = hamming(filtLen);
+    filtSmooth          = filtSmooth./sum(filtSmooth);
+
+
+    for i_activity = 1:size(roiActivity, 2)
+        if filter_forROI(i_activity)
             fig = figure;
             hold on;
-        
+            title({'ROI with filter', roiActivityNames{i_activity}});
             plot(roiActivity(:, i_activity));
             roiActivity(:, i_activity) = filtfilt(filtSmooth,1,roiActivity(:, i_activity));   
             plot(roiActivity(:, i_activity));
-            
-            mysave(fig, ['\filterResults\roiActivity_' num2str(i_activity)]);  
+
+            mysave(fig, [outputpath '\filterResults\roiActivity_' num2str(i_activity)]); 
         end
     end
 
+    
     for i_cluster = 0:clusterCount
         if i_cluster == 0
             roiActivityPeakSize = 'All';
