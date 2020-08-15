@@ -1,4 +1,4 @@
-function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks, SpikeTrainH, SpikeTrainClusterSec] = calcRoiEventDetectorByMLSpike(dataCurROI, ImageSampleTime, frameNum, aV, outputpath, activityIndex, clusterCount, roiName)       
+function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks, SpikeTrainH, SpikeTrainClusterSec] = calcRoiEventDetectorByMLSpike(dataCurROI, ImageSampleTime, frameNum, aV, outputpath, activityIndex, clusterCount, roiName, sigmaChangeValue)       
     traceSig            = dataCurROI;
         
     sampFreq        = 1/ImageSampleTime;
@@ -19,7 +19,10 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks, SpikeTrainH, SpikeTrain
 %     
 %     par.tau = 0.6;
 
-%     par.finetune.sigma = 0.02;
+    if sigmaChangeValue ~= 0
+        par.finetune.sigma = sigmaChangeValue;
+    end
+%     
 
 % (the OGB saturation and drift parameters are fixed)
 %     par.saturation = 0.1;
@@ -341,10 +344,12 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks, SpikeTrainH, SpikeTrain
     end
     xlim([1, size(traceSig, 1)]);
     
-    subplot(8, 1, 8:8);
+    sb2 = subplot(8, 1, 8:8);
     imagesc(traceSig');
     colormap(jet);
     caxis(sb1.YLim);
-        
+       
+    linkaxes([sb1, sb2], 'x');
+    
     mysave(f, [outputpath, '\activity_averagePksHistByMLSpike_', num2str(activityIndex)]);
 end

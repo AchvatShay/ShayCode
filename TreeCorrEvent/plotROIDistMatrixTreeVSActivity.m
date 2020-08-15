@@ -1,4 +1,4 @@
-function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, roiTreeDistanceMatrix, roiActivityDistanceMatrix, do_corrtest, roiActivityDistanceFunction, roiActivityPeakSize, selectedRoi)
+function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, roiTreeDistanceMatrix, roiActivityDistanceMatrix, do_corrtest, roiActivityDistanceFunction, roiActivityPeakSize, selectedRoi)
     %     Plot ROI Activity VS Tree Distance
     fig = figure;
     hold on;
@@ -13,7 +13,8 @@ function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, ro
     leg = [];
 %     legColor = []; 
     classesM = unique(mainTreeBranchROI);
-    index_classes = 1;   
+    index_classes = 1;
+    color_index = 1;
     for index = 1:length(classesM)     
         for secIndex = index:length(classesM)
             if (classesM(index) == -1 && classesM(secIndex) == -1)
@@ -40,7 +41,8 @@ function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, ro
                 nameS(nameS == '_') = '-';
 
                 if isequal(nameF, nameS)
-                    color = [0; rand(2,1)];
+                    color = getTreeColor(color_index);
+                    color_index = color_index + 1;
                 else
                     color = [1, 0, 0];
                 end
@@ -91,8 +93,9 @@ function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, ro
     legend(leg, legColor);
 %     ylim([0,1]);
        
-    mysave(fig, [outputpath, '\ActivityDistVSDendriticDistForROI_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))]);
-    
+    fileName1 = [outputpath, '\ActivityDistVSDendriticDistForROI_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
+    mysave(fig, fileName1);
+     
     f_name = fieldnames(resultsT);
     for t = 1:length(f_name)
         writetable(array2table(resultsT.(f_name{t})),fullfile(outputpath, ['ActivityDistVSDendriticDistForROI_asTable_part_' num2str(t) '_numofTreeDepth', num2str(length(classesM)) '.xls']),'Sheet',f_name{t});
@@ -118,8 +121,11 @@ function plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, ro
     figGraph = figure;
     plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
     title({'Number of subtree ', num2str(length(classesM))});
-    mysave(figGraph, [outputpath, '\GraphWithROI_' num2str(length(classesM))]);
+    fileName2 = [outputpath, '\GraphWithROI_' num2str(length(classesM))];
+    mysave(figGraph, fileName2);
    
+    
+    pictureNames = {fileName1, fileName2};
     
     if do_corrtest            
     %     Cals positive corr between ROI tree and activity distance

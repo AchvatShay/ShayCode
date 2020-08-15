@@ -41,6 +41,7 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
     imagesc(roiTreeDistanceMatrix(roiSortedByCluster, roiSortedByCluster));
     colorbar
     colormap(jet);
+    colormap(flipud(jet));
     xticklabels(tickLabels(roiSortedByCluster));
     xtickangle(90);
     yticklabels(tickLabels(roiSortedByCluster));
