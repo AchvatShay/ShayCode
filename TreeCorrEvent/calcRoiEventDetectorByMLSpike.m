@@ -308,20 +308,27 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks, SpikeTrainH, SpikeTrain
     
 % ---------------------------------------------------------------------------------
 
+    if isempty(SpikeTrainH)
+        SpikeTrainClusterSec = [];
+    elseif clusterCount > length(SpikeTrainH) 
+        SpikeTrainCluster = kmeans(SpikeTrainH', 1, 'Replicates',5, 'MaxIter', 500);
+        SpikeTrainClusterSec = zeros(1, length(SpikeTrainCluster));
+        SpikeTrainClusterSec(SpikeTrainCluster == 1) = clusterCount;
+    else
+        SpikeTrainCluster = kmeans(SpikeTrainH', clusterCount, 'Replicates',5, 'MaxIter', 500);
+        
+        clusterMaxValue = [];
+        for i = 1:clusterCount
+            clusterMaxValue(i) = max(SpikeTrainH(SpikeTrainCluster == i));
+        end
 
-    SpikeTrainCluster = kmeans(SpikeTrainH', clusterCount, 'Replicates',5, 'MaxIter', 500);
-    
-    clusterMaxValue = [];
-    for i = 1:clusterCount
-        clusterMaxValue(i) = max(SpikeTrainH(SpikeTrainCluster == i));
+        [~, cluster_sort_index] = sort(clusterMaxValue);
+        SpikeTrainClusterSec = zeros(1, length(SpikeTrainCluster));
+        for i = 1:clusterCount
+            SpikeTrainClusterSec(SpikeTrainCluster == cluster_sort_index(i)) = i;
+        end
     end
-    
-    [~, cluster_sort_index] = sort(clusterMaxValue);
-    SpikeTrainClusterSec = zeros(1, length(SpikeTrainCluster));
-    for i = 1:clusterCount
-        SpikeTrainClusterSec(SpikeTrainCluster == cluster_sort_index(i)) = i;
-    end
-   
+
     
     f = figure;
     hold on;
