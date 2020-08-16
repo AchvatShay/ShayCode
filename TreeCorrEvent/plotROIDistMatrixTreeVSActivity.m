@@ -3,7 +3,7 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
     fig = figure;
     hold on;
     % Create ylabel
-    ylabel({'Calcium Event Distance'});
+    ylabel({'Calcium Event Correlation'});
 
     % Create xlabel
     xlabel({'Dendritic distance'});
@@ -96,11 +96,48 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
     fileName1 = [outputpath, '\ActivityDistVSDendriticDistForROI_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
     mysave(fig, fileName1);
      
+   %     Plot ROI Activity VS Tree Distance
+    fig2 = figure;
+    hold on;
+    % Create xlabel
+    xlabel({'Calcium Event Correlation'});
+
+    % Create ylabel
+    ylabel({'Dendritic distance'});
+
+    title({'ROI Activity VS Tree Distance'});
+    legend(leg, legColor);
+
+    for clr1 = 1:length(classesM)
+        for clr2 = clr1:length(classesM)
+            scatter(resultsT.(classesColorName{clr, clr2})(:, 2), resultsT.(classesColorName{clr, clr2})(:, 1), 'filled', 'MarkerFaceColor', classesColor{clr, clr2}); 
+        end
+    end
+    
+    fileName3 = [outputpath, '\DendriticDistVSActivityDistForROI_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
+    mysave(fig2, fileName3);
+
+    %     Plot ROI Activity VS Tree Distance
+    fig3 = figure;
+    hold on;
+
+    title({'ROI Activity VS Tree Distance'});
+    legend(leg, legColor);
+
+    for clr1 = 1:length(classesM)
+        for clr2 = clr1:length(classesM)
+            boxplot(resultsT.(classesColorName{clr, clr2})(:,2), 'Labels', {'classesColorName{clr, clr2}'});
+        end
+    end
+    
+    fileName4 = [outputpath, '\DendriticDistVSActivityDistForROIBOXPlot_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
+    mysave(fig3, fileName4);
+%     --------------------------------------------------------------------------
+    
     f_name = fieldnames(resultsT);
     for t = 1:length(f_name)
         writetable(array2table(resultsT.(f_name{t})),fullfile(outputpath, ['ActivityDistVSDendriticDistForROI_asTable_part_' num2str(t) '_numofTreeDepth', num2str(length(classesM)) '.xls']),'Sheet',f_name{t});
     end
-    
     
     %     coutI = 1;
     nodesColor = zeros(length(gRoi.Nodes.Name),3);

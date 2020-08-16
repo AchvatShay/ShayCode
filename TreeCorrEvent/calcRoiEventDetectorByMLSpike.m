@@ -350,6 +350,7 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks, SpikeTrainH, SpikeTrain
         plot(max_index(SpikeTrainClusterSec == i), SpikeTrainH(SpikeTrainClusterSec == i), 'o');
     end
     xlim([1, size(traceSig, 1)]);
+    ylim([-1, 5]);
     
     sb2 = subplot(8, 1, 8:8);
     imagesc(traceSig');

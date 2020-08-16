@@ -3,14 +3,20 @@ function [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPear
         activitylocation = strcmpi(roiActivityNames, selectedROI{index});
                 
         locationToCompare = getLocTocompare(activitylocation, typeCom, clusterNum, all_event_struct);
-        currentROIActivity = roiActivity(locationToCompare, activitylocation);
-
+        
         for secIndex = 1:length(selectedROI)
             activitySeclocation = strcmp(roiActivityNames, selectedROI{secIndex});
-            secROIActivity = roiActivity(locationToCompare, activitySeclocation);
+            locationToCompareSec = getLocTocompare(activitySeclocation, typeCom, clusterNum, all_event_struct);
+        
+            totalActivityLocation = [locationToCompare, locationToCompareSec];
+            totalActivityLocation = sort(totalActivityLocation);
+            totalActivityLocation = unique(totalActivityLocation);
             
-            if isempty(locationToCompare)
-                roiActivityDistanceMatrix(index, secIndex) = -2;
+            currentROIActivity = roiActivity(totalActivityLocation, activitylocation);
+            secROIActivity = roiActivity(totalActivityLocation, activitySeclocation);
+            
+            if isempty(totalActivityLocation)
+                roiActivityDistanceMatrix(index, secIndex) = 0;
                 continue;
             end
             
@@ -22,22 +28,6 @@ function [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPear
 %             end
 
             roiActivityDistanceMatrix(index, secIndex) = corrEventsPeaksROI(1, 2);
-        end
-    end
-    
-    for j = 1:size(roiActivityDistanceMatrix, 1)
-        for k = 1:size(roiActivityDistanceMatrix, 2)
-            if roiActivityDistanceMatrix(j, k) == -2 && roiActivityDistanceMatrix(k, j) ~= -2 
-                roiActivityDistanceMatrix(j, k) = roiActivityDistanceMatrix(k, j);
-            elseif roiActivityDistanceMatrix(j, k) ~= -2 && roiActivityDistanceMatrix(k, j) == -2
-                roiActivityDistanceMatrix(k, j) = roiActivityDistanceMatrix(j, k);
-            elseif roiActivityDistanceMatrix(j, k) == -2 && roiActivityDistanceMatrix(k, j) == -2
-                roiActivityDistanceMatrix(j, k) = 0;
-                roiActivityDistanceMatrix(k, j) = 0;
-            end
-            
-            roiActivityDistanceMatrix(j, k) = (roiActivityDistanceMatrix(j, k) + roiActivityDistanceMatrix(k, j)) ./ 2;
-            roiActivityDistanceMatrix(k, j) = roiActivityDistanceMatrix(j, k) ; 
         end
     end
 end
@@ -60,6 +50,9 @@ function locationToCompare = getLocTocompare(activityLoc, typeCom, clusterNum, a
     if clusterNum == 0
         startEventListBycluster = startEventList;
         endEventListBycluster = endEventList;
+    elseif clusterNum == -1
+        startEventListBycluster = startEventList(indexByCluster ~= 1);
+        endEventListBycluster = endEventList(indexByCluster ~= 1);
     else
         startEventListBycluster = startEventList(indexByCluster == clusterNum);
         endEventListBycluster = endEventList(indexByCluster == clusterNum);

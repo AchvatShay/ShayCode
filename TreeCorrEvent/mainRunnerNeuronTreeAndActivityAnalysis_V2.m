@@ -1,5 +1,5 @@
 function mainRunnerNeuronTreeAndActivityAnalysis_V2
-    neuronTreePathSWC = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\OP2\03.10.2020_Tuft\03.10.20_OP2_Tuft_swcFiles\neuron_2.swc";
+    neuronTreePathSWC = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\OP2\03.10.2020_Tuft\03.10.20_OP2_Tuft_swcFiles\neuron_1.swc";
     
     activityByCSV = false;
     neuronActiityPathCSV = 'D:\Shay\work\N\SM04\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv';
@@ -8,7 +8,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     behaveFileTreadMillPath = '';
     behaveFrameRate = 100;
     
-    outputpath = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\comparison event detection\NewResults\OP2\03.10.2020_Tuft\Ne2_V2\";
+    outputpath = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\comparison event detection\NewResults\OP2\03.10.2020_Tuft\Ne1_TestNewPlots\";
     outputpath = char(outputpath);
     mkdir(outputpath);
    
@@ -45,19 +45,16 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     clusterCount = 3;
     
     roi_count = length(selectedROI);
-    aV = ones(1, roi_count)*0.3;    
-    aV(17) = 0.5;
-    
+    aV = ones(1, roi_count)*0.2;      
     
     sigmaChangeValue = zeros(1, roi_count);
 
-    DeconvFiltDur = ones(1, roi_count) * 0.1;       % smoothing filter duration in sec  
-
-    filter_forROI = ones(1, roi_count) * 1;
+    DeconvFiltDur = ones(1, roi_count) * 0.4;       % smoothing filter duration in sec  
+    do_roiFilter = ones(1, roi_count) * 0;
     
 %     Trial Number To plot with Tree
 
-    save([outputpath '\runParametes'],'aV', 'roi_count', 'filter_forROI', 'DeconvFiltDur', 'sigmaChangeValue', 'excludeRoi');
+    save([outputpath '\runParametes'],'aV', 'roi_count', 'do_roiFilter', 'DeconvFiltDur', 'sigmaChangeValue', 'excludeRoi');
 
     trialNumber = [1, 2] ;
     samplingRate = 30;
@@ -86,31 +83,6 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     end
     
     
-%     Filter ROI activity if needed
-%     
-    sampFreq        = samplingRate;
-    filtDur         = DeconvFiltDur .* sampFreq;      % filter duration in sec
-    filtLenH        = ceil(filtDur/2);
-    filtLen         = filtLenH*2;
-
-    for i_activity = 1:size(roiActivity, 2)
-        if filter_forROI(i_activity)
-            filtSmooth          = hamming(filtLen(i_activity));
-            filtSmooth          = filtSmooth./sum(filtSmooth);
-
-            fig = figure;
-            hold on;
-            title({'ROI with filter', roiActivityNames{i_activity}});
-            plot(roiActivity(:, i_activity));
-            roiActivity(:, i_activity) = filtfilt(filtSmooth,1,roiActivity(:, i_activity));   
-            plot(roiActivity(:, i_activity));
-
-            mysave(fig, [outputpath '\filterResults\roiActivity_' num2str(i_activity)]); 
-            
-            close(fig);
-        end
-    end
-    
 %     Calc Activity Events Window
    
     [all_locationFull_start, all_locationFull_end, all_locationFull_pks, activityClusterValue] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue);
@@ -129,15 +101,43 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
 %     plotTreeAndActivityForTrial(trialNumber, totalTrialTime, roiSortedByCluster, roiActivity, roiActivityNames, selectedROI, outputpath, locationPeaks, windowFULL, roiLinkage);
 %     
     
+
+%     Filter ROI activity if needed
+%     
+    sampFreq        = samplingRate;
+    filtDur         = DeconvFiltDur .* sampFreq;      % filter duration in sec
+    filtLenH        = ceil(filtDur/2);
+    filtLen         = filtLenH*2;
+
+    for i_activity = 1:size(roiActivity, 2)
+        if do_roiFilter == 1
+            filtSmooth          = hamming(filtLen(i_activity));
+            filtSmooth          = filtSmooth./sum(filtSmooth);
+
+            fig = figure;
+            hold on;
+            title({'ROI with filter', roiActivityNames{i_activity}});
+            plot(roiActivity(:, i_activity));
+            roiActivity(:, i_activity) = filtfilt(filtSmooth,1,roiActivity(:, i_activity));   
+            plot(roiActivity(:, i_activity));
+
+            mysave(fig, [outputpath '\filterResults\roiActivity_' num2str(i_activity)]); 
+
+            close(fig);
+        end
+    end
+    
     import mlreportgen.ppt.*
     ppt = Presentation([outputpath '\AnalysisResultsPresentation'], 'C:\Users\shaya\Documents\Custom Office Templates\AnalysisP.potm');
     open(ppt);
     currentResultsSlide = add(ppt, 'AnalysisP');
     index_presentaion = 1;
-    
-    for i_cluster = 0:clusterCount
+       
+    for i_cluster = -1:clusterCount
         if i_cluster == 0
             roiActivityPeakSize = 'All';
+        elseif i_cluster == -1
+            roiActivityPeakSize = 'All_ExcludeSmallEvents';
         else
             roiActivityPeakSize = ['cluster', num2str(i_cluster)];
         end
