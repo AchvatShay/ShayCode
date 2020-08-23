@@ -45,6 +45,8 @@ function plotRoiDistMatrixTreeVsActivityForDepthCompare(gRoi, outputpath, mainTr
     end
 
     legend(leg, legColor);
+    legend('Location','northwestoutside')
+    
 %     ylim([0,1]);
        
     mysave(fig, [outputpath, '\ActivityDistVSDendriticDistForROIByDepth_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))]);

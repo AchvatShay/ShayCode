@@ -1,14 +1,14 @@
 function mainRunnerNeuronTreeAndActivityAnalysis_V2
-    neuronTreePathSWC = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\OP2\03.10.2020_Tuft\03.10.20_OP2_Tuft_swcFiles\neuron_1.swc";
+    neuronTreePathSWC = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08.18.19_Tuft\08.18.19_Tuft_Final_Version_07.15.20\swcFiles_neuron1,3,4\neuron_1.swc";
     
     activityByCSV = false;
-    neuronActiityPathCSV = 'D:\Shay\work\N\SM04\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv';
-    neuronActivityPathTPA = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\OP2\03.10.20";
+    neuronActiityPathCSV = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08.18.19_Tuft\Nate\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv";
+    neuronActivityPathTPA = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\SM04\08_18_19_tuft_Final_Version";
     
     behaveFileTreadMillPath = '';
     behaveFrameRate = 100;
     
-    outputpath = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\comparison event detection\NewResults\OP2\03.10.2020_Tuft\Ne1_TestNewPlots\";
+    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08.18.19_Tuft\Yara\Results\Ne1_V1\";
     outputpath = char(outputpath);
     mkdir(outputpath);
    
@@ -19,7 +19,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
 %     WindoEventToPeakPearson OR PeaksPearson
     roiActivityDistanceFunction = 'WindoEventToPeakPearson';
       
-    excludeRoi = [];
+    excludeRoi = [9];
     
     doComboForCloseRoi = false;
     
@@ -45,7 +45,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     clusterCount = 3;
     
     roi_count = length(selectedROI);
-    aV = ones(1, roi_count)*0.2;      
+    aV = ones(1, roi_count)*0.3;      
     
     sigmaChangeValue = zeros(1, roi_count);
 
@@ -57,13 +57,14 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     save([outputpath '\runParametes'],'aV', 'roi_count', 'do_roiFilter', 'DeconvFiltDur', 'sigmaChangeValue', 'excludeRoi');
 
     trialNumber = [1, 2] ;
-    samplingRate = 30;
+    samplingRate = 20;
     time_sec_of_trial = 12;
         
     
     if (activityByCSV)
         %     load roi activity file
         [roiActivity, roiActivityNames] = loadActivityFile(neuronActiityPathCSV, selectedROI);
+        tr_frame_count = [];
     else
         [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromTPA(neuronActivityPathTPA, selectedROI, outputpath);
     end
@@ -85,7 +86,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     
 %     Calc Activity Events Window
    
-    [all_locationFull_start, all_locationFull_end, all_locationFull_pks, activityClusterValue] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue);
+    [all_locationFull_start, all_locationFull_end, all_locationFull_pks, activityClusterValue, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V2(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue);
 
     all_event_struct.end = all_locationFull_end;
     
@@ -128,7 +129,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     end
     
     import mlreportgen.ppt.*
-    ppt = Presentation([outputpath '\AnalysisResultsPresentation'], 'C:\Users\shaya\Documents\Custom Office Templates\AnalysisP.potm');
+    ppt = Presentation([outputpath '\AnalysisResultsPresentation'], 'AnalysisP.potm');
     open(ppt);
     currentResultsSlide = add(ppt, 'AnalysisP');
     index_presentaion = 1;
@@ -147,11 +148,11 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
     %     Calc Distance Matrix for ROI in Activity
        switch(roiActivityDistanceFunction)
            case 'WindowEventFULLPearson'
-               [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPearson(roiActivity, roiActivityNames, selectedROI, all_event_struct, 'FULL', i_cluster);
+               [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPearson(roiActivity_comb, roiActivityNames, selectedROI, all_event_struct, 'FULL', i_cluster);
            case 'WindoEventToPeakPearson'
-               [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPearson(roiActivity, roiActivityNames, selectedROI, all_event_struct, 'ToPeak', i_cluster);
+               [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPearson(roiActivity_comb, roiActivityNames, selectedROI, all_event_struct, 'ToPeak', i_cluster);
            case 'PeaksPearson'
-               [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPearson(roiActivity, roiActivityNames, selectedROI, all_event_struct, 'Peaks', i_cluster);
+               [roiActivityDistanceMatrix] = calcROIDistanceInActivity_WindowEventPearson(roiActivity_comb, roiActivityNames, selectedROI, all_event_struct, 'Peaks', i_cluster);
        end
 
         figDist = figure;
@@ -182,9 +183,11 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V2
         
         plotRoiDistMatrixTreeVsActivityForDepthCompare(gRoi, outputpathCurr,  selectedROITable, roiTreeDistanceMatrix, roiActivityDistanceMatrix, roiActivityDistanceFunction, roiActivityPeakSize );
         
-        replace(currentResultsSlide.Children(index_presentaion), Picture([picNameFile '.tif']));       
-        replace(currentResultsSlide.Children(index_presentaion + 1), Picture([pictureNames{1} '.tif']));
-        index_presentaion = index_presentaion + 2; 
+        if i_cluster ~= -1
+            replace(currentResultsSlide.Children(index_presentaion), Picture([picNameFile '.tif']));       
+            replace(currentResultsSlide.Children(index_presentaion + 1), Picture([pictureNames{1} '.tif']));
+            index_presentaion = index_presentaion + 2;
+        end
     end  
     
     close(ppt);

@@ -1,4 +1,4 @@
-function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTreeBranchROI, roiTreeDistanceMatrix, roiActivityDistanceMatrix, do_corrtest, roiActivityDistanceFunction, roiActivityPeakSize, selectedRoi)
+function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, firstBranchROI,mainTreeBranchROI, roiTreeDistanceMatrix, roiActivityDistanceMatrix, do_corrtest, roiActivityDistanceFunction, roiActivityPeakSize, selectedRoi)
     %     Plot ROI Activity VS Tree Distance
     fig = figure;
     hold on;
@@ -14,69 +14,28 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
 %     legColor = []; 
     classesM = unique(mainTreeBranchROI);
     index_classes = 1;
-    color_index = 1;
-    for index = 1:length(classesM)     
-        for secIndex = index:length(classesM)
-            if (classesM(index) == -1 && classesM(secIndex) == -1)
-                nameF = 'NotInDepth';
-                nameS = 'NotInDepth';
-                color = [1, 0, 0];
-            elseif (classesM(index) == -1 && classesM(secIndex) ~= -1)
-                nameF = gRoi.Nodes(classesM(secIndex),:).Name{1};
-                nameF(nameF == '_') = '-';
 
-                nameS = 'NotInDepth';
-                color = [1, 0, 0];
-            elseif (classesM(index) ~= -1 && classesM(secIndex) == -1)
-                nameF = gRoi.Nodes(classesM(index),:).Name{1};
-                nameF(nameF == '_') = '-';
-
-                nameS = 'NotInDepth';
-                color = [1, 0, 0];
-            else
-                nameF = gRoi.Nodes(classesM(index),:).Name{1};
-                nameF(nameF == '_') = '-';
-
-                nameS = gRoi.Nodes(classesM(secIndex),:).Name{1};
-                nameS(nameS == '_') = '-';
-
-                if isequal(nameF, nameS)
-                    color = getTreeColor(color_index);
-                    color_index = color_index + 1;
-                else
-                    color = [1, 0, 0];
-                end
-            end
-            
-            classesColor(index, secIndex) = {color};
-            leg(index_classes) = plot(0,0, 'color', classesColor{index, secIndex}, 'LineWidth', 2.5);
-            legColor(index_classes) = {[nameF '&' nameS]};
-            
-            classesColorName(index, secIndex) = replace(legColor(index_classes),{'&','-'}, '_'); 
-            resultsT.(classesColorName{index, secIndex}) = []; 
-            index_classes = index_classes + 1;
-        end
-    end
     
     corrIndexMatrix = 1;   
+    classesColorName = {};
     corrIndexMatrixInsideMainBranch = 1;
     for index = 1: size(roiTreeDistanceMatrix, 2)
         for secIndex = (index + 1): size(roiTreeDistanceMatrix, 2)
             for clr = 1:length(classesM)
-                if (mainTreeBranchROI(index) == mainTreeBranchROI(secIndex) && mainTreeBranchROI(secIndex) == classesM(clr))
-                    color = classesColor{clr, clr};
-                    colorName = classesColorName{clr, clr};
+                if (mainTreeBranchROI(index) == mainTreeBranchROI(secIndex))
+                    color = getTreeColor('within', find(classesM == mainTreeBranchROI(index)));
+                    colorName = {gRoi.Nodes(mainTreeBranchROI(index),:).Name{1}, gRoi.Nodes(mainTreeBranchROI(index),:).Name{1}};
+                    
                     corrMatrixForROIInsideTheMainBranch(corrIndexMatrixInsideMainBranch, :) = [roiTreeDistanceMatrix(index, secIndex), roiActivityDistanceMatrix(index, secIndex)];
                     corrIndexMatrixInsideMainBranch = corrIndexMatrixInsideMainBranch + 1;
                     break;
                 else
-                    for clr2 = clr:length(classesM)
-                        if (mainTreeBranchROI(index) == classesM(clr) && mainTreeBranchROI(secIndex) == classesM(clr2)) || ...
-                                (mainTreeBranchROI(index) == classesM(clr2) && mainTreeBranchROI(secIndex) == classesM(clr))
-                            color = classesColor{clr, clr2};
-                            colorName = classesColorName{clr, clr2};
-                            break;
-                        end
+                    if (firstBranchROI(index) == firstBranchROI(secIndex))
+                        colorName = {gRoi.Nodes(mainTreeBranchROI(index),:).Name{1}, gRoi.Nodes(mainTreeBranchROI(secIndex),:).Name{1}};
+                        color = getTreeColor('between');
+                    else
+                        colorName = {gRoi.Nodes(firstBranchROI(index),:).Name{1}, gRoi.Nodes(firstBranchROI(secIndex),:).Name{1}};
+                        color = getTreeColor('main');
                     end
                 end
             end
@@ -86,36 +45,39 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
             corrIndexMatrix = corrIndexMatrix + 1;
             scatter(roiTreeDistanceMatrix(index, secIndex), roiActivityDistanceMatrix(index, secIndex), 'filled', 'MarkerFaceColor', color);
             
+            if isempty(classesColorName) || ...
+                    (sum(strcmp(classesColorName, [colorName{1} '_' colorName{2}])) == 0 && sum(strcmp(classesColorName, [colorName{2} '_' colorName{1}])) == 0)
+                colorName = [colorName{1} '_' colorName{2}];
+                colorName = replace(colorName,{'&','-'}, '_'); 
+                classesColorName(index_classes) = {colorName};
+                classesColor(index_classes) = {color};
+                
+                leg(index_classes) = plot(0,0, 'color', color, 'LineWidth', 2.5);
+                legColor(index_classes) = {colorName};
+                
+                resultsT.(colorName) = [];
+                index_classes = index_classes + 1;
+            else
+                if (sum(strcmp(classesColorName, [colorName{1} '_' colorName{2}])) ~= 0)
+                    colorName = [colorName{1} '_' colorName{2}];
+                else
+                    colorName = [colorName{2} '_' colorName{1}];
+                end
+                colorName = replace(colorName,{'&','-'}, '_'); 
+            end
+            
+                
             resultsT.(colorName)(end + 1, :) = [roiTreeDistanceMatrix(index, secIndex), roiActivityDistanceMatrix(index, secIndex)];
         end
     end
 
     legend(leg, legColor);
+    legend('Location','northwestoutside')
+    
 %     ylim([0,1]);
        
     fileName1 = [outputpath, '\ActivityDistVSDendriticDistForROI_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
     mysave(fig, fileName1);
-     
-   %     Plot ROI Activity VS Tree Distance
-    fig2 = figure;
-    hold on;
-    % Create xlabel
-    xlabel({'Calcium Event Correlation'});
-
-    % Create ylabel
-    ylabel({'Dendritic distance'});
-
-    title({'ROI Activity VS Tree Distance'});
-    legend(leg, legColor);
-
-    for clr1 = 1:length(classesM)
-        for clr2 = clr1:length(classesM)
-            scatter(resultsT.(classesColorName{clr, clr2})(:, 2), resultsT.(classesColorName{clr, clr2})(:, 1), 'filled', 'MarkerFaceColor', classesColor{clr, clr2}); 
-        end
-    end
-    
-    fileName3 = [outputpath, '\DendriticDistVSActivityDistForROI_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
-    mysave(fig2, fileName3);
 
     %     Plot ROI Activity VS Tree Distance
     fig3 = figure;
@@ -124,11 +86,27 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
     title({'ROI Activity VS Tree Distance'});
     legend(leg, legColor);
 
-    for clr1 = 1:length(classesM)
-        for clr2 = clr1:length(classesM)
-            boxplot(resultsT.(classesColorName{clr, clr2})(:,2), 'Labels', {'classesColorName{clr, clr2}'});
+    matR = [];
+    groupR = [];
+    labelsR = [];
+    indexGroup = 1;
+    for clr1 = 1:length(classesColorName)
+        tempR = resultsT.(classesColorName{clr1});
+
+        if isempty(tempR)
+            continue;
         end
+
+        matR = [matR; tempR(:,2)];
+        groupR = [groupR; ones(size(tempR(:,2)))*indexGroup];
+
+        indexGroup = indexGroup + 1;
+
+        labelsR{end + 1} = classesColorName{clr1};
+
     end
+    
+    boxplot(matR, groupR, 'Labels', labelsR);        
     
     fileName4 = [outputpath, '\DendriticDistVSActivityDistForROIBOXPlot_' roiActivityDistanceFunction ,'_eventsSize', roiActivityPeakSize, '_numofTreeDepth', num2str(length(classesM))];
     mysave(fig3, fileName4);
@@ -136,7 +114,11 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
     
     f_name = fieldnames(resultsT);
     for t = 1:length(f_name)
-        writetable(array2table(resultsT.(f_name{t})),fullfile(outputpath, ['ActivityDistVSDendriticDistForROI_asTable_part_' num2str(t) '_numofTreeDepth', num2str(length(classesM)) '.xls']),'Sheet',f_name{t});
+        if isempty(resultsT.(f_name{t}))
+            continue;
+        end
+        
+        writetable(array2table(resultsT.(f_name{t})),fullfile(outputpath, ['ActivityVSDendriticForROI_' num2str(t) '_Depth', num2str(length(classesM)) '.xls']),'Sheet',f_name{t});
     end
     
     %     coutI = 1;
@@ -149,7 +131,7 @@ function pictureNames = plotROIDistMatrixTreeVSActivity(gRoi, outputpath, mainTr
         for i = 1:length(mainTreeBranchROI)
             if mainTreeBranchROI(i) == classesM(clr)
                 locRoi = find(strcmp(gRoi.Nodes.Name, selectedRoi(i)));
-                nodesColor(locRoi, :) = classesColor{clr, clr};
+                nodesColor(locRoi, :) = getTreeColor('within', (clr));
 %                 coutI = coutI + 1;
             end
         end
