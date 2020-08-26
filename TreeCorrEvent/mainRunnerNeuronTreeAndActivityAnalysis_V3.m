@@ -5,15 +5,17 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     neuronActiityPathCSV = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08.18.19_Tuft\Nate\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv";
     neuronActivityPathTPA = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\SM04\08_18_19_tuft_Final_Version";
     
+    hyperbolicDistMatrixLocation = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\StructuralTreeHyperbolic\matlab_matrix.mat"; 
+    
     behaveFileTreadMillPath = '';
     behaveFrameRate = 100;
     
-    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\Structural_VS_FunctionalAnalysis\cluster3pks10\";
+    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\Structural_VS_Functional\cluster4pks10_loranzStructuralDist\";
     outputpath = char(outputpath);
     mkdir(outputpath);
    
-%     Can be Euclidean OR ShortestPath = ( Between 2 roi according to the tree path )
-    roiTreeDistanceFunction = 'ShortestPath';
+%     Can be Euclidean OR ShortestPath OR HyperbolicDist = ( Between 2 roi according to the tree path )
+    roiTreeDistanceFunction = 'HyperbolicDist';
     
 %     Can be WindowEventFULLPearson OR
 %     WindoEventToPeakPearson OR PeaksPearson
@@ -39,7 +41,7 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     
     selectedROI = selectedROITable.Name;
       
-    clusterCount = 3;
+    clusterCount = 4;
     eventWin = 10;
     
     roi_count = length(selectedROI);
@@ -77,6 +79,8 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
            [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath); 
         case 'ShortestPath'
            [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROITable, outputpath);
+        case 'HyperbolicDist'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, hyperbolicDistMatrixLocation);
     end
     
 %     Calc branching
@@ -89,8 +93,13 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     
 %     Calc Activity Events Window
    
-    [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V3(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue);
-
+    if isfile([outputpath, '\roiActivity_comb.mat'])
+        load([outputpath, '\roiActivity_comb.mat'], 'allEventsTable', 'roiActivity_comb');
+    else
+        [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V3(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue);
+        save([outputpath, '\roiActivity_comb.mat'], 'allEventsTable', 'roiActivity_comb');
+    end
+    
     roiActivity_comb = double(roiActivity_comb);
     saveROIBranchingIndexAsLabel(eventWin, gRoi, selectedROISplitDepth1, selectedROI, outputpath, firstDepthCompare, allEventsTable, roiActivity_comb, tr_frame_count);
     saveROIBranchingIndexAsLabel(eventWin, gRoi, selectedROISplitDepth3, selectedROI, outputpath, secDepthCompare, allEventsTable, roiActivity_comb, tr_frame_count);
