@@ -55,6 +55,13 @@ function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpat
    
     end
     
+    matrixForHS = getMatrixForDistanceHS(gRoi, rootNodeID); 
+    depthToSave = ceil(log2(size(gRoi.Nodes, 1) + 1));
+    depthToSaveReal = (log2(size(gRoi.Nodes, 1) + 1));
+    baches = size(gRoi.Nodes, 1);
+    points_name = gRoi.Nodes.Name;
+    save([outputpath, '\GraphAsMatrix.mat'], 'matrixForHS', 'depthToSave', 'baches', 'depthToSaveReal', 'points_name');
+    
     figGraph = figure;
     plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', gRoi.Nodes.ColorN);
     mysave(figGraph, [outputpath, '\GraphWithROI']);
@@ -75,6 +82,30 @@ function gRoi = setDepth(gRoi, rootNodeID, depthBefore, indexB)
     end
 end
 
+
+function matrixForHS = getMatrixForDistanceHS(gRoi, rootNodeID)
+    matrixForHS = zeros(size(gRoi.Nodes, 1));
+    
+    for nid = 1:size(gRoi.Nodes, 1)
+        [p, d] = shortestpath(gRoi, gRoi.Nodes.ID(nid), rootNodeID);
+        
+        w_sum = 0;
+        prevIndex = 0;
+        for indexP = 1:length(p)
+            current = find(gRoi.Nodes.ID == p(indexP));
+            
+            if (current == nid)
+                matrixForHS(nid, current) = 1;
+                prevIndex = current;
+            else
+                index_e = findedge(gRoi,p(indexP),gRoi.Nodes.ID(prevIndex));
+                w_sum = w_sum + gRoi.Edges.Weight(index_e);
+                matrixForHS(nid, current) = w_sum;
+                prevIndex = current;
+            end
+        end
+    end
+end
 
 function [gRoi, indexNodesList] = combRoiClose(gRoi, fNodeID, sNodeID, indexNodesList)
     if contains(gRoi.Nodes.Name(fNodeID), 'roi') && contains(gRoi.Nodes.Name(sNodeID), 'roi')
