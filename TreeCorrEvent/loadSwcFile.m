@@ -56,11 +56,12 @@ function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpat
     end
     
     matrixForHS = getMatrixForDistanceHS(gRoi, rootNodeID); 
+    matrixForSP = getMatrixForDistanceSP(gRoi); 
     depthToSave = ceil(log2(size(gRoi.Nodes, 1) + 1));
     depthToSaveReal = (log2(size(gRoi.Nodes, 1) + 1));
     baches = size(gRoi.Nodes, 1);
-    points_name = gRoi.Nodes.Name;
-    save([outputpath, '\GraphAsMatrix.mat'], 'matrixForHS', 'depthToSave', 'baches', 'depthToSaveReal', 'points_name');
+    points_name = char(gRoi.Nodes.Name);
+    save([outputpath, '\GraphAsMatrix.mat'], 'matrixForHS', 'depthToSave', 'baches', 'depthToSaveReal', 'points_name', 'matrixForSP');
     
     figGraph = figure;
     plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', gRoi.Nodes.ColorN);
@@ -103,6 +104,18 @@ function matrixForHS = getMatrixForDistanceHS(gRoi, rootNodeID)
                 matrixForHS(nid, current) = w_sum;
                 prevIndex = current;
             end
+        end
+    end
+end
+
+
+function matrixForSP = getMatrixForDistanceSP(gRoi)
+    matrixForSP = zeros(size(gRoi.Nodes, 1));
+    
+    for nid = 1:size(gRoi.Nodes, 1)
+        for nid_sec = 1:nid
+            [~, d] = shortestpath(gRoi, gRoi.Nodes.ID(nid), gRoi.Nodes.ID(nid_sec));
+            matrixForSP(nid, nid_sec) = d;
         end
     end
 end

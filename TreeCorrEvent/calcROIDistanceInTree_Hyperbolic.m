@@ -1,6 +1,4 @@
-function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROI, outputpath, matrixHyperbolic)
-   load(matrixHyperbolic);
-    
+function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROI, outputpath, loranzORPDistMat)
    tickLabels = [];
    loranzLocation = zeros(1, length(selectedROI.ID));
    
@@ -9,7 +7,7 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
         loranzLocation(index) = find(gRoi.Nodes.ID == selectedROI.ID(index));
    end
       
-   roiTreeDistanceMatrix = loranzDistMat(loranzLocation); 
+   roiTreeDistanceMatrix = loranzORPDistMat(loranzLocation, loranzLocation); 
    
     y = squareform(roiTreeDistanceMatrix);
     l = linkage(y, 'single');

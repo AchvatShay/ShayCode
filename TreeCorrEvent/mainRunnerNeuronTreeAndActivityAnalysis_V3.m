@@ -1,21 +1,21 @@
 function mainRunnerNeuronTreeAndActivityAnalysis_V3
-    neuronTreePathSWC = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\08.18.19_Tuft_Final_Version_07.15.20\swcFiles_neuron1,3,4\neuron_1.swc";
+    neuronTreePathSWC = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\08.18.19_Tuft_Final_Version_07.15.20\swcFiles_neuron1,3,4\neuron_1.swc";
     
     activityByCSV = false;
-    neuronActiityPathCSV = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08.18.19_Tuft\Nate\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv";
-    neuronActivityPathTPA = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\SM04\08_18_19_tuft_Final_Version";
+    neuronActiityPathCSV = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08.18.19_Tuft\Nate\2019-08-18_SM04_handreach_aligned_Ch1_dffByRoi.csv";
+    neuronActivityPathTPA = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\SM04\08_18_19_tuft_Final_Version";
     
-    hyperbolicDistMatrixLocation = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\StructuralTreeHyperbolic\matlab_matrix.mat"; 
+    hyperbolicDistMatrixLocation = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\StructuralTreeHyperbolic\matlab_matrix_normal2.mat"; 
     
     behaveFileTreadMillPath = '';
     behaveFrameRate = 100;
     
-    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\Structural_VS_Functional\cluster4pks10_loranzStructuralDist\";
+    outputpath = "E:\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Yara's Data For Shay\SM04\08_18_19_tuft_Final_Version\Analysis\N1\Structural_VS_Functional\1-9-20\Run1\";
     outputpath = char(outputpath);
     mkdir(outputpath);
    
-%     Can be Euclidean OR ShortestPath OR HyperbolicDist = ( Between 2 roi according to the tree path )
-    roiTreeDistanceFunction = 'HyperbolicDist';
+%     Can be Euclidean OR ShortestPath OR HyperbolicDist_L OR HyperbolicDist_P  = ( Between 2 roi according to the tree path )
+    roiTreeDistanceFunction = 'HyperbolicDist_P';
     
 %     Can be WindowEventFULLPearson OR
 %     WindoEventToPeakPearson OR PeaksPearson
@@ -52,8 +52,16 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     
 %     Trial Number To plot with Tree
 
-    save([outputpath '\runParametes'],'aV', 'roi_count', 'sigmaChangeValue', 'excludeRoi');
+    save([outputpath '\runParametes'],'aV', 'roi_count', 'sigmaChangeValue', 'excludeRoi', 'hyperbolicDistMatrixLocation', 'clusterCount', 'eventWin', 'roiTreeDistanceFunction');
 
+    fid=fopen([outputpath '\Parametes.txt'],'w');
+    fprintf(fid, 'hyperbolicDistMatrixLocation : %s r\n', hyperbolicDistMatrixLocation);    
+    fprintf(fid, 'roiTreeDistanceFunction : %s r\n', roiTreeDistanceFunction);
+    fprintf(fid, 'roiActivityDistanceFunction : %s r\n', roiActivityDistanceFunction);    
+    fprintf(fid, 'clusterCount : %d r\n', clusterCount);
+    fprintf(fid, 'eventWin : %d r\n', eventWin);
+    fclose(fid);
+    
     trialNumber = [1, 2] ;
     samplingRate = 20;
     time_sec_of_trial = 12;
@@ -67,20 +75,28 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
         [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromTPA(neuronActivityPathTPA, selectedROI, outputpath);
     end
     
+    save([outputpath, '\roiActivityRawData.mat'], 'roiActivity', 'roiActivityNames');
+    
+    
 %     Behave TreadMillData
     if ~isempty(behaveFileTreadMillPath)
         [speedBehave, accelBehave, speedActivity, accelActivity] = treadmilBehave(behaveFileTreadMillPath, behaveFrameRate);
         plotBaseTreadMillActivity(speedBehave, accelBehave, roiActivity, outputpath);
     end
-          
+         
+   load(hyperbolicDistMatrixLocation);
+
+    
 %     Calc Distance Matrix for ROI in Tree
     switch(roiTreeDistanceFunction)
         case 'Euclidean'
            [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath); 
         case 'ShortestPath'
            [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROITable, outputpath);
-        case 'HyperbolicDist'
-           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, hyperbolicDistMatrixLocation);
+        case 'HyperbolicDist_L'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, loranzDistMat);
+        case 'HyperbolicDist_P'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, poincareDistMat);
     end
     
 %     Calc branching
