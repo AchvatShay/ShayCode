@@ -17,14 +17,14 @@ function [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByPrecantage] =
             
             
             if isempty(locationToCompareByH)
-                roiActivityDistanceMatrixByH(index, secIndex) = 0;
+                roiActivityDistanceMatrixByH(index, secIndex) = nan;
             else   
                 corrEventsPeaksROIByH = corr([currentROIActivityByH, secROIActivityByH], 'type', 'Pearson');
                 roiActivityDistanceMatrixByH(index, secIndex) = corrEventsPeaksROIByH(1, 2);
             end         
             
             if isempty(locationToCompareByPrecantage)
-                roiActivityDistanceMatrixByPrecantage(index, secIndex) = 0;
+                roiActivityDistanceMatrixByPrecantage(index, secIndex) = nan;
             else   
                 corrEventsPeaksROIByP = corr([currentROIActivityByP, secROIActivityByP], 'type', 'Pearson');
                 roiActivityDistanceMatrixByPrecantage(index, secIndex) = corrEventsPeaksROIByP(1, 2);

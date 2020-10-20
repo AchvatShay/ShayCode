@@ -11,8 +11,17 @@ function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, 
         currentROIActivityByH = roiActivity(locationToCompareByH, activitylocation);
         currentROIActivityByP = roiActivity(locationToCompareByPrecantage, activitylocation);
         
-        averageActivityForROIByH(index) = mean(currentROIActivityByH);
-        averageActivityForROIByP(index) = mean(currentROIActivityByP);
+        if isempty(currentROIActivityByP)
+            averageActivityForROIByP(index) = 0;
+        else
+            averageActivityForROIByP(index) = mean(currentROIActivityByP);
+        end
+        
+        if isempty(currentROIActivityByH)
+            averageActivityForROIByH(index) = 0;
+        else
+            averageActivityForROIByH(index) = mean(currentROIActivityByH);
+        end
     end
     
     

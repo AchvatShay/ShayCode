@@ -37,5 +37,5 @@ function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree
     xtickangle(90);
     yticklabels(tickLabels(roiSortedByCluster));
     
-    mysave(figDist, [outputpath, '\DistMatrixTreeROIEuclidean']);    
+    mysave(figDist, [outputpath, '\DistMatrixROIStructure']);    
 end

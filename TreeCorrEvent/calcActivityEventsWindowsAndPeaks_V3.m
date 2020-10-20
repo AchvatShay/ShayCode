@@ -1,4 +1,4 @@
-function [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V3(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue)
+function [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V3(roiActivity, outputpath, clusterCount, samplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue, mean_aV)
     
     roi_locationFull_pks = [];
     roi_locationFull_H = [];
@@ -11,6 +11,8 @@ function [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_
     end
     
     meanROIActivityForDetector = mean(roiActivity_foreventDetector , 2);
+    meanROIActivityForDetector(meanROIActivityForDetector ~= 0) = meanROIActivityForDetector(meanROIActivityForDetector ~= 0) + 0.1;
+    
     meanCombActivity = mean(roiActivity_comb, 2);
     
     par = tps_mlspikes('par');
@@ -21,8 +23,7 @@ function [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_
 
     Fpred = tps_mlspikes(meanROIActivityForDetector,par);
     
-    
-    [all_locationFull_start, all_locationFull_end, ~, ~, ~, ~] = calcRoiEventDetectorByMLSpike_V3(Fpred, 1 / samplingRate, tr_frame_count, 0.01, outputpath, 0, clusterCount, 'mean', 0, 1);
+    [all_locationFull_start, all_locationFull_end, ~, ~, ~, ~] = calcRoiEventDetectorByMLSpike_V3(Fpred, 1 / samplingRate, tr_frame_count, mean_aV, outputpath, 0, clusterCount, 'mean', 0, 1);
     all_locationFull_pks = zeros(length(all_locationFull_start),1);
     all_locationFull_H = zeros(length(all_locationFull_start),1);
     all_locationFull_roiPrecantage = zeros(length(all_locationFull_start),1);
@@ -55,7 +56,7 @@ function [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_
         [maxValue, maxLocation] = max(meanCombActivity(all_locationFull_start(index): all_locationFull_end(index)));
         all_locationFull_pks(index) = maxLocation + all_locationFull_start(index) - 1;
         all_locationFull_H(index) = maxValue;
-        all_locationFull_Name(index) = {sprintf('event_%d', index)};
+        all_locationFull_Name(index) = {sprintf('event_%d', index)};       
     end
      
     events_location_pass = all_locationFull_pks ~= -1;

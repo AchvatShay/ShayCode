@@ -1,5 +1,5 @@
 function [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromTPA(activityfileTPAFolder, selectedROI, outputpath)
-    TPAList = dir(strcat(activityfileTPAFolder,'\TPA*'));
+    TPAList = dir(strcat(activityfileTPAFolder,'\TPA*.mat'));
 
     fileNumRoi = length(TPAList);
      
@@ -34,7 +34,7 @@ function [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromT
             if dataSize == 0
                 dataSize = length(currentData);
             elseif dataSize ~= size(currentData, 1)
-                warning('ROI not the same data size');
+                warning('ROI not the same data size!!!!!!!!!!!!!!!!');
                 break;
             end
             

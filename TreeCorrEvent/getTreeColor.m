@@ -1,5 +1,7 @@
 function color = getTreeColor(methodT, treeNum)
     switch methodT
+        case 'ND'
+            color = [0,0,0];
         case 'main'
             color = [1, 0, 0];
         case 'between'
@@ -7,25 +9,17 @@ function color = getTreeColor(methodT, treeNum)
         case 'within'
             switch treeNum
                 case 1
-                    color = [34,139,34] ./ 255;
+                    color = [1.00,0.60,0.20];
                 case 2
-                    color = [50,205,50] ./ 255;
+                    color = [0.44,0.75,0.43];
                 case 3
-                    color = [0,128,128] ./ 255;
+                    color = [0.68,0.44,0.71];
                 case 4
-                    color = [0,255,255] ./ 255;
+                    color = [0.69,0.40,0.24];
                 case 5
-                    color = [106,90,205] ./ 255;
+                    color = [0.87,0.81,0.43]; 
                 case 6
-                    color = [128,0,128] ./ 255;
-                case 7
-                    color = [255,20,147] ./ 255;
-                case 8
-                    color = [210,105,30] ./ 255;
-                case 9
-                    color = [112,128,144] ./ 255; 
-                case 10
-                    color = [188,143,143] ./ 255;
+                    color = [0.97,0.56,0.77];
                 otherwise
                     color = [0,0,0];
             end

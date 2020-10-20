@@ -60,10 +60,11 @@ function plotRoiDistMatrixTreeVsActivityForDepthCompare(gRoi, outputpath, mainTr
         nodesColor(locRoi, :) = classesColor(depth_calc == classesM, :);    
     end
 
-    figGraph = figure;
-    plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
-    mysave(figGraph, [outputpath, '\GraphWithROIDepth_' num2str(length(classesM))]);
-   
+    plotGraphWithROI(gRoi, [outputpath, '\GraphWithROIDepth_' num2str(length(classesM))], nodesColor, {'Graph Depth'})
+    
+    fclose('all');
+    close all;
+    clear resultsT;
 end
 
 function [color, depthName] = getDepthColor(depthNum)

@@ -226,6 +226,8 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
     
     mysave(f, [outputpath, '\activity_averagePksHistByMLSpike_', num2str(activityIndex)]);
     
+    close(f);
+    
     comb_activity = fit;
     eventDetector_activity = zeros(length(fit), 1);
     for i = 1:length(SpikeTrainPks)
