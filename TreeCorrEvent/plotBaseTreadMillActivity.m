@@ -23,6 +23,7 @@ function plotBaseTreadMillActivity(speedB, accelB, roiActivity, outputpath, sele
 
         for in = 1:length(selectedROI)
            plotForActivity(speedB, accelB, roiActivity(framesVector.cl, in), outputpath, [selectedROI{in} '_cluster_ByH_c' num2str(cl)]);
+           snapnow;
            close all;
         end
 
@@ -35,9 +36,9 @@ function plotBaseTreadMillActivity(speedB, accelB, roiActivity, outputpath, sele
     for in = 1:length(selectedROI)
        
        plotForActivity(speedB, accelB, roiActivity(:, in), outputpath, selectedROI{in});
+       snapnow;
        close all;
     end
-    
 end
 
 function plotForActivity(speedB, accelB, currActivity, outputpath, nameROI)
@@ -65,4 +66,28 @@ function plotForActivity(speedB, accelB, currActivity, outputpath, nameROI)
     linkaxes([s1, s2, s3], 'x');
     
     mysave(f, [outputpath, '\Behave_TreadMill\SpeedAndAccelPresentation_' nameROI]); 
+    
+    fig = figure;
+    hold on;
+    
+    s1 = subplot(8, 1, 1:3);
+    hold on;
+    plot(currActivity, 'Color', 'k', 'LineWidth', 1.5);
+    plot(speedB(1:size(currActivity, 1)) + 1, 'Color', [25 110 180, 100] ./ 255);
+    
+    title({nameROI, ' Activity & Velocity'});
+    xlabel('Time');
+    xlim([1, size(currActivity, 1)]);
+    
+    s2 = subplot(8, 1, 5:7);
+    hold on;
+    plot(currActivity, 'Color', 'k', 'LineWidth', 1.5);
+    plot(accelB(1:size(currActivity, 1)) + 1, 'Color', [25 110 180, 100] ./ 255);
+    
+    title({nameROI, ' Activity & Acceleration'});
+    xlabel('Time');
+    xlim([1, size(currActivity, 1)]);
+    linkaxes([s1, s2, s3], 'x');
+   
+    mysave(fig, [outputpath, '\Behave_TreadMill\SpeedAndAccelPresentationType2_' nameROI]);  
 end

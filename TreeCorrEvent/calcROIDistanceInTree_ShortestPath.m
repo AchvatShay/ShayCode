@@ -1,4 +1,4 @@
-function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROI, outputpath)
+function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROI, outputpath, selectedROISplitDepth1)
     roiTreeDistanceMatrix = zeros(length(selectedROI.ID), length(selectedROI.ID));
     roiTreeDistanceMatrixUnW = zeros(length(selectedROI.ID), length(selectedROI.ID));
     tickLabels = [];
@@ -28,23 +28,34 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
     leafOrder = optimalleaforder(l,y);
     
     dendrogram(l, 'Labels', tickLabels, 'reorder', leafOrder);
-    
+    xtickangle(90);
+    title('Tree Structure Dendrogram');
     mysave(figDendrogram, [outputpath, '\DendrogramROIShortestPathDist']);
     
     roiSortedByCluster = leafOrder;    
 
+    if selectedROISplitDepth1(roiSortedByCluster(1)) > min(selectedROISplitDepth1)
+        roiSortedByCluster = roiSortedByCluster(end:-1:1);
+    end
+    
+    
+    for index_roi = 1:length(tickLabels)
+        labelsNames(index_roi) = {sprintf('roi%d', sscanf(tickLabels{index_roi}, 'roi%d'))};
+    end
+ 
+    
     figDist = figure;
     hold on;
-    title({'ROI Distance'});
+    title({'ROI Structure Distance'});
     xticks(1:length(selectedROI.ID));
     yticks(1:length(selectedROI.ID));
     imagesc(roiTreeDistanceMatrix(roiSortedByCluster, roiSortedByCluster));
     colorbar
     colormap(jet);
     colormap(flipud(jet));
-    xticklabels(tickLabels(roiSortedByCluster));
+    xticklabels(labelsNames(roiSortedByCluster));
     xtickangle(90);
-    yticklabels(tickLabels(roiSortedByCluster));
+    yticklabels(labelsNames(roiSortedByCluster));
     
     mysave(figDist, [outputpath, '\DistMatrixROIStructure']);
 end

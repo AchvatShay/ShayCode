@@ -34,6 +34,20 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
 % -------------------------------------------------------------------------------    
     countVec = fn_timevector(spk, ImageSampleTime, 'count');
     
+    
+%     Test ----------------------------------------------------------------
+%     spkmin = 1.5*GetSn(traceSig);
+%     model_ar = 'ar2';
+%     fr = ImageSampleTime;
+%     decay_time = 0.5;
+%     lam = choose_lambda(exp(-1/(fr*decay_time)),GetSn(traceSig),0.99);
+%     [cc,spk,opts_oasis] = deconvolveCa(traceSig,model_ar,'method','thresholded','optimize_pars',true,'maxIter',20,...
+%                                 'window',150,'lambda',lam,'smin',spkmin);
+%     fit = cc;                        
+%     countVec = spk ~= 0;
+% -------------------------------------------------------------------------------
+    
+    
     countVec((end + 1) : length(traceSig)) = 0;
     
     isRunNeeded = 1;
@@ -195,6 +209,15 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
         spk_index = spk_index + 1;     
     end
 
+    for i = 1:length(SpikeTrainStart)
+        tr_indexStart = floor(SpikeTrainStart(i) ./ frameNum) + 1;
+        tr_indexPKS = floor(SpikeTrainPks(i) ./ frameNum) + 1;
+       
+        if tr_indexStart ~= tr_indexPKS
+             SpikeTrainStart(i) = SpikeTrainPks(i);
+        end
+    end
+    
     
     f = figure;
     hold on;

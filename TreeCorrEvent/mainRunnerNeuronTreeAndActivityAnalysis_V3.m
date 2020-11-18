@@ -1,66 +1,35 @@
-function mainRunnerNeuronTreeAndActivityAnalysis_V3
-    neuronTreePathSWC = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM04\07.03.19_RewardRun\07.03.19_SM04_RewardRun_swcFiles\neuron_2.swc";
+function mainRunnerNeuronTreeAndActivityAnalysis_V3(globalParameters) 
+    
+    neuronTreePathSWC = fullfile(globalParameters.MainFolder, 'Shay', globalParameters.AnimalName, globalParameters.DateAnimal, globalParameters.swcFile);
     
     activityByCSV = false;
-    neuronActiityPathCSV = "";
-    neuronActivityPathTPA = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\SM04\07.03.19_RewardRun\";
+    neuronActiityPathCSV = '';
+    neuronActivityPathTPA = fullfile(globalParameters.MainFolder, globalParameters.AnimalName, globalParameters.DateAnimal);
     
-    hyperbolicDistMatrixLocation = "";
-%     hyperbolicDistMatrixLocation = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM04\07.03.19_RewardRun\Analysis\N1\Structural_VS_Functional\14-10-20\Run1\HS_create\StructuralTreeHyperbolic\matlab_matrixbernoulli_100_3000.mat"; 
-    
-    
-    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM04\07.03.19_RewardRun\Analysis\N2\Structural_VS_Functional\19-10-20\Run1\no_behave\Pearson\SP\";
-    outputpath = char(outputpath);
-    mkdir(outputpath);
+    outputpath = globalParameters.outputpath;
    
-    behaveFileTreadMillPath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM04\07.03.19_RewardRun\07.03.19_SM04_RewardRun_Behavior.txt";
-    behaveFrameRateTM = 100;
-    
-    ImageSamplingRate = 20;
-    time_sec_of_trial = 30;
-    trialNumber = [1, 2] ;
-    BehavioralSamplingRate = 200;
-    behavioralDelay = 20;
-       
-%     No events put non
-    runByEvent = {'non'};
-    isHandreach = false;
-    
-%     FOR Hand Reach 
-%     NO labels 0, 1 suc , 2 fail
-    split_trialsLabel = 0;
-    runBehaveLag = [-inf, inf];
-    do_events_seq = [];
-    doBehaveAlignedPlot = false;
-        
-%     Can be Euclidean OR ShortestPath OR HyperbolicDist_L OR HyperbolicDist_P  = ( Between 2 roi according to the tree path )
-    roiTreeDistanceFunction = 'ShortestPath';
-    
-%     Can be WindowEventFULLPearson OR
-%     WindoEventToPeakPearson OR PeaksPearson
-%     OR WindoEventToPeakCov
-    roiActivityDistanceFunction = 'WindoEventToPeakPearson';
-      
-    clusterCount = 4;
-    eventWin = 10;
-    
-    % 0.01 
-    mean_aV = 0.01; 
-        
-    excludeRoi = [34];
-    
-    apical_roi = [];
+    behaveFileTreadMillPath = fullfile(globalParameters.MainFolder, 'Shay' , globalParameters.AnimalName, globalParameters.DateAnimal, globalParameters.treadmilFile);
     
     doComboForCloseRoi = false;
     
-    firstDepthCompare = 1;
-    secDepthCompare = 2;
+    eventsDetectionFolder = fullfile(globalParameters.MainFolder, 'Shay' , globalParameters.AnimalName, ...
+    globalParameters.DateAnimal, 'Analysis', globalParameters.neuronNumberName, 'Structural_VS_Functional',...
+    globalParameters.RunnerDate,globalParameters.RunnerNumber, 'EventsDetection');
+    mkdir(eventsDetectionFolder);
+    
+    
+    centralityFolder = fullfile(globalParameters.outputpath, 'centrality');
+    mkdir(centralityFolder);
+
+    sprintf('Animal :%s, Date :%s, Neuron :%s, Behave :%s, Analysis :%s', globalParameters.AnimalName, globalParameters.DateAnimal, globalParameters.neuronNumberName, globalParameters.behaveType, globalParameters.analysisType)
     
 %     load Tree Data
+    sprintf('Structure Plot Results')
+       
     [gRoi, rootNodeID, selectedROITable] = loadSwcFile(neuronTreePathSWC, outputpath, doComboForCloseRoi);
     
-    for i = 1:length(excludeRoi)
-        ex_results = contains(selectedROITable.Name, sprintf('roi%05d', excludeRoi(i)));
+    for i = 1:length(globalParameters.excludeRoi)
+        ex_results = contains(selectedROITable.Name, sprintf('roi%05d', globalParameters.excludeRoi(i)));
         
         if sum(ex_results) == 1
             selectedROITable(ex_results, :) = [];
@@ -69,9 +38,9 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     
     selectedROI = selectedROITable.Name;
      
-    index_apical = zeros(1, length(apical_roi));   
-    for i = 1:length(apical_roi)
-        ex_results = find(contains(selectedROITable.Name, sprintf('roi%05d', apical_roi(i))));
+    index_apical = zeros(1, length(globalParameters.apical_roi));   
+    for i = 1:length(globalParameters.apical_roi)
+        ex_results = find(contains(selectedROITable.Name, sprintf('roi%05d', globalParameters.apical_roi(i))));
         
         if ~isempty(ex_results)
             index_apical(i) = ex_results;
@@ -80,27 +49,31 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
  
     
     roi_count = length(selectedROI);
-    aV = ones(1, roi_count)*0.3;
+    aV = ones(1, roi_count)*globalParameters.aVForAll;
+    
+    if ~isempty(globalParameters.aVFix.location)
+        aV(globalParameters.aVFix.location) = globalParameters.aVFix.values;
+    end
     
     sigmaChangeValue = zeros(1, roi_count);
 
     
 %     Trial Number To plot with Tree
 
-    save([outputpath '\runParametes'],'aV', 'roi_count', 'sigmaChangeValue', 'excludeRoi', 'hyperbolicDistMatrixLocation', 'clusterCount', 'eventWin', 'roiTreeDistanceFunction');
+    save([outputpath '\runParametes'],'aV', 'roi_count', 'sigmaChangeValue', 'globalParameters');
 
     fid=fopen([outputpath '\Parametes.txt'],'w');
-    fprintf(fid, 'hyperbolicDistMatrixLocation : %s r\n', hyperbolicDistMatrixLocation);    
-    fprintf(fid, 'roiTreeDistanceFunction : %s r\n', roiTreeDistanceFunction);
-    fprintf(fid, 'roiActivityDistanceFunction : %s r\n', roiActivityDistanceFunction);    
-    fprintf(fid, 'clusterCount : %d r\n', clusterCount);
-    fprintf(fid, 'eventWin : %d r\n', eventWin);
+    fprintf(fid, 'hyperbolicDistMatrixLocation : %s r\n', globalParameters.hyperbolicDistMatrixLocation);    
+    fprintf(fid, 'roiTreeDistanceFunction : %s r\n', globalParameters.roiTreeDistanceFunction);
+    fprintf(fid, 'roiActivityDistanceFunction : %s r\n', globalParameters.roiActivityDistanceFunction);    
+    fprintf(fid, 'clusterCount : %d r\n', globalParameters.clusterCount);
+    fprintf(fid, 'eventWin : %d r\n', globalParameters.eventWin);
     
-    for in = 1:length(runByEvent)
-        fprintf(fid, 'event behave : %s r\n', runByEvent{in});
+    for in = 1:length(globalParameters.runByEvent)
+        fprintf(fid, 'event behave : %s r\n', globalParameters.runByEvent{in});
     end
     
-    fprintf(fid, 'event behave lag : %d - %d r\n', runBehaveLag(1), runBehaveLag(2));
+    fprintf(fid, 'event behave lag : %d - %d r\n', globalParameters.runBehaveLag(1), globalParameters.runBehaveLag(2));
     fclose(fid);
         
     
@@ -114,29 +87,30 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
       
 %     Behave TreadMillData
       
-   if ~strcmp(hyperbolicDistMatrixLocation, "") 
-        load(hyperbolicDistMatrixLocation);
+   if ~strcmp(globalParameters.hyperbolicDistMatrixLocation, "") 
+        load(globalParameters.hyperbolicDistMatrixLocation);
    end
-    
-%     Calc Distance Matrix for ROI in Tree
-    switch(roiTreeDistanceFunction)
-        case 'Euclidean'
-           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath); 
-        case 'ShortestPath'
-           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROITable, outputpath);
-        case 'HyperbolicDist_L'
-           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, loranzDistMat);
-        case 'HyperbolicDist_P'
-           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, poincareDistMat);
-    end
-    
-%     Calc branching
+   
+   %     Calc branching
     selectedROISplitDepth1 = ones(length(selectedROI), 1) * -1;
-    selectedROISplitDepth1 = getSelectedROISplitBranchID(gRoi, firstDepthCompare, selectedROISplitDepth1, selectedROI);   
+    selectedROISplitDepth1 = getSelectedROISplitBranchID(gRoi, globalParameters.firstDepthCompare, selectedROISplitDepth1, selectedROI);   
   
     selectedROISplitDepth3 = ones(length(selectedROI), 1) * -1;
-    selectedROISplitDepth3 = getSelectedROISplitBranchID(gRoi, secDepthCompare, selectedROISplitDepth3, selectedROI);   
+    selectedROISplitDepth3 = getSelectedROISplitBranchID(gRoi, globalParameters.secDepthCompare, selectedROISplitDepth3, selectedROI);   
+
     
+%     Calc Distance Matrix for ROI in Tree
+    switch(globalParameters.roiTreeDistanceFunction)
+        case 'Euclidean'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath, selectedROISplitDepth1); 
+        case 'ShortestPath'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROITable, outputpath, selectedROISplitDepth1);
+        case 'HyperbolicDist_L'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, loranzDistMat, selectedROISplitDepth1);
+        case 'HyperbolicDist_P'
+           [roiTreeDistanceMatrix, roiSortedByCluster, roiLinkage] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROITable, outputpath, poincareDistMat, selectedROISplitDepth1);
+    end
+        
     % Save Graph for HS structure with colors
     classesD1 = unique(selectedROISplitDepth1);   
     classesD2 = unique(selectedROISplitDepth3);   
@@ -151,19 +125,37 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
         colorMatrix2(d_i, :) = getTreeColor('within', find(classesD2 == selectedROISplitDepth3(d_i)));
     end
     
-    save([outputpath, '\roiActivityRawData.mat'], 'roiActivity', 'roiActivityNames', 'colorMatrix1', 'colorMatrix2');
+    save([outputpath, '\roiActivityRawData.mat'], 'roiActivity', 'roiActivityNames', 'colorMatrix1', 'colorMatrix2', 'selectedROISplitDepth1', 'selectedROISplitDepth3');
     saveGraphForHS(gRoi, rootNodeID, outputpath, colorMatrix1, colorMatrix2, selectedROITable);
     
 %     Calc Activity Events Window
-
+    snapnow;
     close all;
 
-    if isfile([outputpath, '\roiActivity_comb.mat'])
-        load([outputpath, '\roiActivity_comb.mat'], 'allEventsTable', 'roiActivity_comb');        
-    elseif all(strcmp(runByEvent, 'non'))
-        [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V3(roiActivity, outputpath, clusterCount, ImageSamplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue, mean_aV);
+    if isfile([eventsDetectionFolder, '\roiActivity_comb.mat'])
+        load([eventsDetectionFolder, '\roiActivity_comb.mat'], 'allEventsTable', 'roiActivity_comb'); 
         
-        save([outputpath, '\roiActivity_comb.mat'], 'allEventsTable', 'roiActivity_comb');
+        if globalParameters.reRunClusterData
+        %     -----------------------------------------------------------------------------------------------------
+
+            SpikeTrainClusterSecByH = getClusterForActivity(allEventsTable.H, globalParameters.clusterCount);
+            printClusterResults(SpikeTrainClusterSecByH, globalParameters.clusterCount, mean(roiActivity_comb, 2), allEventsTable.pks, allEventsTable.start, allEventsTable.event_end, allEventsTable.H, outputpath, 'ByH')
+
+        %   -----------------------------------------------------------------------------------------------------  
+
+            SpikeTrainClusterSecByPrecantage = getClusterForActivity(allEventsTable.roiPrecantage, globalParameters.clusterCount);
+            printClusterResults(SpikeTrainClusterSecByPrecantage, globalParameters.clusterCount, mean(roiActivity_comb, 2), allEventsTable.pks, allEventsTable.start, allEventsTable.event_end, allEventsTable.H, outputpath, 'ByP')
+
+        %     -----------------------------------------------------------------------------------------------------
+
+            allEventsTable.clusterByRoiPrecantage = SpikeTrainClusterSecByPrecantage';
+            allEventsTable.clusterByH = SpikeTrainClusterSecByH';
+        end
+        
+    elseif all(strcmp(globalParameters.runByEvent, 'non'))
+        [allEventsTable, roiActivity_comb] = calcActivityEventsWindowsAndPeaks_V3(roiActivity, eventsDetectionFolder, globalParameters.clusterCount, globalParameters.ImageSamplingRate, tr_frame_count, aV, roiActivityNames, sigmaChangeValue, globalParameters.mean_aV);
+        
+        save([eventsDetectionFolder, '\roiActivity_comb.mat'], 'allEventsTable', 'roiActivity_comb');
     else
         error('first run all with no events')
     end    
@@ -173,36 +165,70 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
         allEventsTable.tr_index(i_e) = tr_index;
     end
     
-    if isHandreach
-       if all(~strcmp(runByEvent, 'non'))
-           [BehaveDataAll, NAMES, trials_label] = loadBDAFile(neuronActivityPathTPA, BehavioralSamplingRate, ImageSamplingRate, tr_frame_count, behavioralDelay);
+    if globalParameters.isHandreach 
+        [BehaveDataAll, NAMES, trials_label] = loadBDAFile(neuronActivityPathTPA, globalParameters.BehavioralSamplingRate, globalParameters.ImageSamplingRate, tr_frame_count, globalParameters.behavioralDelay, globalParameters.toneTime);
         
+        if ~strcmp(globalParameters.excludeTrailsByEventCount.Name, 'non')
+           behaveCountForCa = BehaveDataAll.(['last', globalParameters.excludeTrailsByEventCount.Name]).count(allEventsTable.tr_index);
+          
+           fig = figure;
+           hold on;
+
+           subplot(2, 1, 1);
+           h_ByT = histogram(BehaveDataAll.(['last', globalParameters.excludeTrailsByEventCount.Name]).count); 
+           title({['Event ' globalParameters.excludeTrailsByEventCount.Name], 'Histogram By Trial'});
+
+           subplot(2, 1, 2);
+           h_ByP = histogram(behaveCountForCa);
+           title({['Event ' globalParameters.excludeTrailsByEventCount.Name], 'Histogram By Ca Events'});
+
+           mysave(fig, [outputpath, '\HistogramEventsCount_' globalParameters.excludeTrailsByEventCount.Name]);  
+            
+            allEventsTable(behaveCountForCa < globalParameters.excludeTrailsByEventCount.countRange(1) | ...
+                behaveCountForCa > globalParameters.excludeTrailsByEventCount.countRange(2),:) = [];
+        end
+       
+       if all(~strcmp(globalParameters.runByEvent, 'non'))          
            runByEventTemp = {};
            runBehaveLagTemp = [];
-           for i_run = 1:length(runByEvent)
-                if contains(runByEvent(i_run), '_all')
-                    runByEvent_fix = replace(runByEvent{i_run}, '_all', '');
-                    newEvents = NAMES(contains(NAMES, runByEvent_fix)&(~contains(NAMES, ['last' runByEvent_fix])));
+           for i_run = 1:length(globalParameters.runByEvent)
+                if contains(globalParameters.runByEvent(i_run), '_all')
+                    runByEvent_fix = replace(globalParameters.runByEvent{i_run}, '_all', '');
+                    newEvents = NAMES(contains(NAMES, runByEvent_fix)&(~contains(NAMES, ['last' runByEvent_fix]))&(~contains(NAMES, ['firstTone' runByEvent_fix])));
                     runByEventTemp((end + 1 ): (end + length(newEvents))) = newEvents;
-                    runBehaveLagTemp((end + 1 ): (end + length(newEvents)), :) = [ones(length(newEvents), 1) * runBehaveLag(i_run, 1), ones(length(newEvents), 1) * runBehaveLag(i_run, 2)];
+                    runBehaveLagTemp((end + 1 ): (end + length(newEvents)), :) = [ones(length(newEvents), 1) * globalParameters.runBehaveLag(i_run, 1), ones(length(newEvents), 1) * globalParameters.runBehaveLag(i_run, 2)];
                 else
-                    runByEventTemp(end+1) = runByEvent(i_run);
-                    runBehaveLagTemp(end + 1, :) = runBehaveLag(i_run, :);
+                    runByEventTemp(end+1) = globalParameters.runByEvent(i_run);
+                    runBehaveLagTemp(end + 1, :) = globalParameters.runBehaveLag(i_run, :);
                 end
            end
            
            currentEventLoc = zeros(length(runByEventTemp),1);
+          
            for in = 1:length(runByEventTemp)
               currentEventLoc(in) = find(strcmp(NAMES, runByEventTemp{in}));
               
-              if doBehaveAlignedPlot
-                 plotEventCaForBehaveDataHandReach(BehaveDataAll.(NAMES{currentEventLoc(in)}).startTiming, allEventsTable, clusterCount, outputpath)           
+              if ~strcmp(globalParameters.FirstEventAfter , 'non')
+                   [BehaveDataAll.([NAMES{currentEventLoc(in)},'_', globalParameters.FirstEventAfter{1}]).startTiming,...
+                       BehaveDataAll.([NAMES{currentEventLoc(in)},'_', globalParameters.FirstEventAfter{1}]).endTiming] = findFirstEventsAfter(BehaveDataAll, NAMES, NAMES{currentEventLoc(in)}, globalParameters.FirstEventAfter{1});
+                   NAMES(end + 1) = {[NAMES{currentEventLoc(in)},'_', globalParameters.FirstEventAfter{1}]};
+                  
+                   currentEventLoc(in) = length(NAMES); 
+                   runByEventTemp(in) =  NAMES(end);
+              end
+              
+              if globalParameters.doBehaveAlignedPlot
+                  if strcmp(globalParameters.EventTiming, 'start')
+                      plotEventCaForBehaveDataHandReach(BehaveDataAll.(NAMES{currentEventLoc(in)}).startTiming, tr_frame_count, allEventsTable, globalParameters.clusterCount, outputpath, NAMES{currentEventLoc(in)}, trials_label, globalParameters.split_trialsLabel)           
+                  else
+                      plotEventCaForBehaveDataHandReach(BehaveDataAll.(NAMES{currentEventLoc(in)}).endTiming, tr_frame_count, allEventsTable, globalParameters.clusterCount, outputpath, NAMES{currentEventLoc(in)}, trials_label, globalParameters.split_trialsLabel)           
+                  end
               end
            end
            
            eventsIndexTodelete = zeros(1, size(allEventsTable, 1));
            for i_e = 1:size(allEventsTable, 1)
-               if split_trialsLabel ~= 0 & trials_label(allEventsTable.tr_index(i_e)) ~= split_trialsLabel
+               if globalParameters.split_trialsLabel ~= 0 & trials_label(allEventsTable.tr_index(i_e)) ~= globalParameters.split_trialsLabel
                     eventsIndexTodelete(i_e) = 1;
                     continue;
                end
@@ -211,8 +237,12 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
                aligned_start = zeros(1, length(runByEventTemp));
                
                checkEvent = zeros(1, length(runByEventTemp));
-               for in = 1:length(runByEventTemp)
-                   alignedLocation(in) = BehaveDataAll.(NAMES{currentEventLoc(in)}).startTiming(allEventsTable.tr_index(i_e));
+               for in = 1:length(runByEventTemp) 
+                   if strcmp(globalParameters.EventTiming, 'start')
+                       alignedLocation(in) = BehaveDataAll.(NAMES{currentEventLoc(in)}).startTiming(allEventsTable.tr_index(i_e));
+                   else
+                       alignedLocation(in) = BehaveDataAll.(NAMES{currentEventLoc(in)}).endTiming(allEventsTable.tr_index(i_e));
+                   end
                    
                    if alignedLocation(in) ~= 0
                       alignedLocation(in) = (allEventsTable.tr_index(i_e) - 1) * tr_frame_count + alignedLocation(in);
@@ -223,40 +253,37 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
                    else
                        checkEvent(in) = 1;
                    end
-               end
+               end               
                
-               if ~isempty(do_events_seq)
-                   seq_check = zeros(1, size(do_events_seq, 1));
-                   for seq = 1:size(do_events_seq, 1)
-                       if ~all(checkEvent(do_events_seq(seq, :)) == 0)
-                          seq_check(seq) = 1;
-                       end
-                   end
-                   
-                   if all(seq_check == 1)
-                        eventsIndexTodelete(i_e) = 1;
-                   end
-               else
+                if globalParameters.do_eventsBetween
+                    if ~(all(checkEvent == 0))
+                       eventsIndexTodelete(i_e) = 1;
+                    end
+                else
                     if all(checkEvent == 1)
                         eventsIndexTodelete(i_e) = 1;
                     end
-               end              
-              
+                end
            end
 
-           allEventsTable(eventsIndexTodelete == 1, :) = [];
+           
+           if globalParameters.runByNegEvent
+               allEventsTable(eventsIndexTodelete == 0, :) = [];
+           else
+               allEventsTable(eventsIndexTodelete == 1, :) = [];
+           end           
        end
     else
-        [speedBehave, accelBehave, ~, ~, BehaveDataTreadmil] = treadmilBehave(behaveFileTreadMillPath, behaveFrameRateTM, ImageSamplingRate);
+        [speedBehave, accelBehave, ~, ~, BehaveDataTreadmil] = treadmilBehave(behaveFileTreadMillPath, globalParameters.behaveFrameRateTM, globalParameters.ImageSamplingRate);
         
-        if all(~strcmp(runByEvent, 'non'))
+        if all(~strcmp(globalParameters.runByEvent, 'non'))
            eventsIndexTodelete = zeros(1, size(allEventsTable, 1));
            
            for i_e = 1:size(allEventsTable, 1)
                
-               check_runByEvents = zeros(size(runByEvent));
-               for ind = 1:length(runByEvent)
-                   if isempty(find(allEventsTable.start(i_e) == BehaveDataTreadmil.(runByEvent{ind}), 1))
+               check_runByEvents = zeros(size(globalParameters.runByEvent));
+               for ind = 1:length(globalParameters.runByEvent)
+                   if isempty(find(allEventsTable.start(i_e) == BehaveDataTreadmil.(globalParameters.runByEvent{ind}), 1))
                        check_runByEvents(ind) = 1;
                    end
                end
@@ -269,43 +296,62 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
            
            allEventsTable(eventsIndexTodelete == 1, :) = [];
         else
-            plotBaseTreadMillActivity(speedBehave, accelBehave, roiActivity, outputpath, selectedROI, allEventsTable, clusterCount); 
-            plotEventsCaForBehaveDataTreadMil(speedBehave, accelBehave, allEventsTable, clusterCount, outputpath, 300, BehaveDataTreadmil);
+            plotBaseTreadMillActivity(speedBehave, accelBehave, roiActivity, outputpath, selectedROI, allEventsTable, globalParameters.clusterCount); 
+            plotEventsCaForBehaveDataTreadMil(speedBehave, accelBehave, allEventsTable, globalParameters.clusterCount, outputpath, 300, BehaveDataTreadmil);
+            
+            save([outputpath, 'BehaveTreadMilResults'], 'BehaveDataTreadmil');
         end
         
     end
     
     writetable(allEventsTable,[outputpath '\eventsCaSummary.csv']);
     
+    snapnow;
+    close all;
+
+    plotEventsHistogram(allEventsTable, outputpath, globalParameters.clusterCount);
+    
     if isempty(allEventsTable)
+        snapnow;
         close all;
         fclose('all');
         return;
     end
     
     roiActivity_comb = double(roiActivity_comb);
-    saveROIBranchingIndexAsLabel(eventWin, gRoi, selectedROISplitDepth1, selectedROI, outputpath, firstDepthCompare, allEventsTable, roiActivity_comb, tr_frame_count);
-    saveROIBranchingIndexAsLabel(eventWin, gRoi, selectedROISplitDepth3, selectedROI, outputpath, secDepthCompare, allEventsTable, roiActivity_comb, tr_frame_count);
-
+    
 %     for HS Activity! with cluster
-    saveDataForHS(allEventsTable, roiActivity, roiActivity_comb, roiActivityNames, outputpath, colorMatrix1, colorMatrix2);
+    sprintf('Pca according to cluster by H')
+    saveDataForHS(gRoi, allEventsTable, 'ByH', roiActivity, roiActivity_comb, roiActivityNames, outputpath, colorMatrix1, colorMatrix2, classesD1, classesD2, selectedROISplitDepth1, selectedROISplitDepth3);
 
-%     saveNewTPAFile(selectedROI, roiActivity_comb, tr_frame_count);
+    snapnow;
+    close all;
+    
+    sprintf('Pca according to cluster by P')
+    saveDataForHS(gRoi, allEventsTable, 'ByP', roiActivity, roiActivity_comb, roiActivityNames, outputpath, colorMatrix1, colorMatrix2, classesD1, classesD2, selectedROISplitDepth1, selectedROISplitDepth3);
     
 %     Plot Tree And Trial Activity in the ROI    
-%     totalTrialTime = ImageSamplingRate * time_sec_of_trial;
-%     plotTreeAndActivityForTrial(trialNumber, totalTrialTime, roiSortedByCluster, roiActivity, roiActivityNames, selectedROI, outputpath, locationPeaks, windowFULL, roiLinkage);
+%     totalTrialTime = globalParameters.ImageSamplingRate * globalParameters.time_sec_of_trial;
+%     plotTreeAndActivityForTrial(globalParameters.trialNumber, totalTrialTime, roiSortedByCluster, roiActivity, roiActivityNames, selectedROI, outputpath, locationPeaks, windowFULL, roiLinkage);
 %     
-    
-    analysisEventsActivityForROI(gRoi, allEventsTable, selectedROI, selectedROISplitDepth1, outputpath, ['Depth1_Behave_' runByEvent{:}], clusterCount);
-    analysisEventsActivityForROI(gRoi, allEventsTable, selectedROI, selectedROISplitDepth3, outputpath, ['Depth2_Behave_' runByEvent{:}], clusterCount);
-
+    snapnow;
     close all;
 
+    sprintf('Ca Events Analysis according to subtree"s , mean activity')
+    
+    analysisEventsActivityForROI(gRoi, allEventsTable, selectedROI, selectedROISplitDepth1, outputpath, ['Depth1' globalParameters.runByEvent{:}], globalParameters.clusterCount);
+    analysisEventsActivityForROI(gRoi, allEventsTable, selectedROI, selectedROISplitDepth3, outputpath, ['Depth2' globalParameters.runByEvent{:}], globalParameters.clusterCount);
+    
+    snapnow;
+    close all;
+
+    plotEventsSperation(allEventsTable, roiActivity_comb, selectedROI, selectedROISplitDepth1, outputpath, gRoi, roiSortedByCluster, roiTreeDistanceMatrix, index_apical);
+        
     import mlreportgen.ppt.*
     ppt = Presentation([outputpath '\AnalysisResultsPresentation'], 'AnalysisP.potm');
     open(ppt);
     currentResultsSlideSt = add(ppt, 'Analysis_St');
+    currentResultsSlideHist = add(ppt, 'HistogramP');
     
     currentResultsSlideByH = add(ppt, 'AnalysisP');
     currentResultsSlideByP = add(ppt, 'AnalysisP');
@@ -316,23 +362,28 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     currentResultsSlideByH_Dendogram = add(ppt, 'AnalysisD');
     currentResultsSlideByP_Dendogram = add(ppt, 'AnalysisD');
     
+    currentResultsSlideByH_no1 = add(ppt, 'AnalysisNo1H');
+    currentResultsSlideByP_no1 = add(ppt, 'AnalysisNo1P');
+    
     replace(currentResultsSlideSt.Children(1), Picture([outputpath '\GraphWithROI.tif']));       
     replace(currentResultsSlideSt.Children(2), Picture([outputpath '\DistMatrixROIStructure.tif']));       
+    replace(currentResultsSlideSt.Children(end), Paragraph([globalParameters.AnimalName, ' ', globalParameters.DateAnimal, ' ', globalParameters.neuronNumberName]));       
             
+    replace(currentResultsSlideHist.Children(1), Picture([outputpath '\HistogramEventsCluster.tif']));       
     
     index_presentaionByH = 1;
-    index_presentaionByP = 1;
-       
-    for i_cluster = -1:clusterCount
+    index_presentaionByP = 1;       
+    
+    for i_cluster = -1:globalParameters.clusterCount
         if i_cluster == 0
             roiActivityPeakSize = 'All';
             event_count_ByH = size(allEventsTable, 1);
             event_count_ByP = size(allEventsTable, 1);
         elseif i_cluster == -1
-            roiActivityPeakSize = 'All_ExcludeSmallEvents';
+            roiActivityPeakSize = 'All_ExcludeBigEvents';
             
-            event_count_ByH = sum(allEventsTable.clusterByH ~= 1);
-            event_count_ByP = sum(allEventsTable.clusterByRoiPrecantage ~= 1);
+            event_count_ByH = sum(allEventsTable.clusterByH ~= globalParameters.clusterCount);
+            event_count_ByP = sum(allEventsTable.clusterByRoiPrecantage ~= globalParameters.clusterCount);
         else
             roiActivityPeakSize = ['cluster', num2str(i_cluster)];
             
@@ -340,27 +391,34 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
             event_count_ByP = sum(allEventsTable.clusterByRoiPrecantage == i_cluster);
         end
         
-        outputpathCurr = [outputpath, roiActivityPeakSize];
+        outputpathCurr = [outputpath, '\', roiActivityPeakSize];
+        
+        sprintf('Ca Events, %s', roiActivityPeakSize)
+            
            
     %     Calc Distance Matrix for ROI in Activity
-       switch(roiActivityDistanceFunction)
+       switch(globalParameters.roiActivityDistanceFunction)
            case 'WindowEventFULLPearson'
-               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'FULL', i_cluster);
+               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'FULL', i_cluster, globalParameters.clusterCount);
                 
                plotTreeByROIAverageActivityWithCluster(gRoi, outputpathCurr, roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'FULL', i_cluster)
               
            case 'WindoEventToPeakPearson'
-               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster);
+               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster, globalParameters.clusterCount);
 
                plotTreeByROIAverageActivityWithCluster(gRoi, outputpathCurr, roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster)
                
            case 'PeaksPearson'
-               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'Peaks', i_cluster);
+               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'Peaks', i_cluster, globalParameters.clusterCount);
             
                plotTreeByROIAverageActivityWithCluster(gRoi, outputpathCurr, roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'Peaks', i_cluster)
           
            case 'WindoEventToPeakCov'
-               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventCov_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster);
+               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventCov_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster, globalParameters.clusterCount);
+            
+               plotTreeByROIAverageActivityWithCluster(gRoi, outputpathCurr, roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster)           
+           case 'WindoEventToPeakSperman'
+               [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByP] = calcROIDistanceInActivity_WindowEventSperman_V3(roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster, globalParameters.clusterCount);
             
                plotTreeByROIAverageActivityWithCluster(gRoi, outputpathCurr, roiActivity_comb, roiActivityNames, selectedROI, allEventsTable, 'ToPeak', i_cluster)           
        end
@@ -368,19 +426,73 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
        saveActivityDistanceForHS(roiActivityDistanceMatrixByH, outputpathCurr, roiActivityNames, colorMatrix1, colorMatrix2);
        
        if i_cluster ~= -1
-            fileNameD_ByH = plotTreeAndActivityDendogram(outputpathCurr,  'ByH', roiActivityDistanceMatrixByH, selectedROI, roiLinkage,  roiSortedByCluster, false);
-            replace(currentResultsSlideByH_Dendogram.Children(i_cluster + 2), Picture([fileNameD_ByH '.tif'])); 
-            
-            fileNameD_ByP = plotTreeAndActivityDendogram(outputpathCurr, 'ByP', roiActivityDistanceMatrixByP, selectedROI, roiLinkage,  roiSortedByCluster, false);
-            replace(currentResultsSlideByP_Dendogram.Children(i_cluster + 2), Picture([fileNameD_ByP '.tif']));       
-       end    
+           sprintf('Cluster By H')
        
-       index_presentaionByH = plotResultesByClusterType(false, event_count_ByH, currentResultsSlideByH, currentResultsSlideByH_s, roiActivityDistanceMatrixByH, 'ByH', selectedROI, roiSortedByCluster, outputpathCurr, roiActivityDistanceFunction,...
-           roiActivityPeakSize, gRoi, roiTreeDistanceMatrix, selectedROISplitDepth3, selectedROISplitDepth1, index_presentaionByH, selectedROITable, i_cluster, index_apical);
-      
-       index_presentaionByP = plotResultesByClusterType(false, event_count_ByP, currentResultsSlideByP, currentResultsSlideByP_s, roiActivityDistanceMatrixByP, 'ByP', selectedROI, roiSortedByCluster, outputpathCurr, roiActivityDistanceFunction,...
-           roiActivityPeakSize, gRoi, roiTreeDistanceMatrix, selectedROISplitDepth3, selectedROISplitDepth1, index_presentaionByP, selectedROITable, i_cluster, index_apical);       
-      
+            fileNameD_ByH_f = plotTreeAndActivityDendogram(outputpathCurr,  'ByH', roiActivityDistanceMatrixByH, selectedROI,...
+                roiLinkage,  roiSortedByCluster, false, false);
+            replace(currentResultsSlideByH_Dendogram.Children(i_cluster + 2), Picture([fileNameD_ByH_f '.tif'])); 
+            
+            fileNameD_ByH_t = plotTreeAndActivityDendogram(outputpathCurr,  'ByH', roiActivityDistanceMatrixByH, selectedROI,...
+                roiLinkage,  roiSortedByCluster, false, true);
+            replace(currentResultsSlideByH_Dendogram.Children(i_cluster + 7), Picture([fileNameD_ByH_t '.tif'])); 
+            
+            snapnow;
+            close all;
+       
+            sprintf('Cluster By P')
+       
+            fileNameD_ByP_f = plotTreeAndActivityDendogram(outputpathCurr, 'ByP', roiActivityDistanceMatrixByP, selectedROI, roiLinkage,...
+                roiSortedByCluster, false, false);
+            replace(currentResultsSlideByP_Dendogram.Children(i_cluster + 2), Picture([fileNameD_ByP_f '.tif']));  
+            
+            fileNameD_ByP_t = plotTreeAndActivityDendogram(outputpathCurr, 'ByP', roiActivityDistanceMatrixByP, selectedROI, roiLinkage,...
+                roiSortedByCluster, false, true);
+            replace(currentResultsSlideByP_Dendogram.Children(i_cluster + 7), Picture([fileNameD_ByP_t '.tif']));  
+       else
+           sprintf('Cluster By H')
+       
+           fileNameD_ByH_f = plotTreeAndActivityDendogram(outputpathCurr,  'ByH', roiActivityDistanceMatrixByH, selectedROI,...
+                roiLinkage,  roiSortedByCluster, false, false);
+            replace(currentResultsSlideByH_no1.Children(3), Picture([fileNameD_ByH_f '.tif'])); 
+            
+           fileNameD_ByH_t = plotTreeAndActivityDendogram(outputpathCurr,  'ByH', roiActivityDistanceMatrixByH, selectedROI,...
+                roiLinkage,  roiSortedByCluster, false, true);
+            replace(currentResultsSlideByH_no1.Children(4), Picture([fileNameD_ByH_t '.tif'])); 
+            
+            snapnow;
+            close all;
+       
+            sprintf('Cluster By P')
+       
+             fileNameD_ByP_f = plotTreeAndActivityDendogram(outputpathCurr, 'ByP', roiActivityDistanceMatrixByP, selectedROI, roiLinkage,...
+                roiSortedByCluster, false, false);
+            replace(currentResultsSlideByP_no1.Children(3), Picture([fileNameD_ByP_f '.tif']));  
+            
+            fileNameD_ByP_t = plotTreeAndActivityDendogram(outputpathCurr, 'ByP', roiActivityDistanceMatrixByP, selectedROI, roiLinkage,...
+                roiSortedByCluster, false, true);
+            replace(currentResultsSlideByP_no1.Children(4), Picture([fileNameD_ByP_t '.tif']));  
+       end
+       snapnow;
+       close all;
+       
+       sprintf('Cluster By H')
+       index_presentaionByH = plotResultesByClusterType(true, false, event_count_ByH, currentResultsSlideByH, currentResultsSlideByH_s, roiActivityDistanceMatrixByH, 'ByH', selectedROI, roiSortedByCluster, outputpathCurr, globalParameters.roiActivityDistanceFunction,...
+           roiActivityPeakSize, gRoi, roiTreeDistanceMatrix, selectedROISplitDepth3, selectedROISplitDepth1, index_presentaionByH, selectedROITable, i_cluster, index_apical, currentResultsSlideByH_no1);
+        
+       snapnow;
+       close all;
+       
+       sprintf('Cluster By P')
+       index_presentaionByP = plotResultesByClusterType(true, false, event_count_ByP, currentResultsSlideByP, currentResultsSlideByP_s, roiActivityDistanceMatrixByP, 'ByP', selectedROI, roiSortedByCluster, outputpathCurr, globalParameters.roiActivityDistanceFunction,...
+           roiActivityPeakSize, gRoi, roiTreeDistanceMatrix, selectedROISplitDepth3, selectedROISplitDepth1, index_presentaionByP, selectedROITable, i_cluster, index_apical, currentResultsSlideByP_no1);       
+       
+       sprintf('centrality Analysis By H');
+       plotCentralityForGraph(gRoi, roiActivityDistanceMatrixByH, selectedROI, fullfile(centralityFolder, roiActivityPeakSize, 'ByH'), true, selectedROISplitDepth1);
+
+       sprintf('centrality Analysis By P');
+       plotCentralityForGraph(gRoi, roiActivityDistanceMatrixByP, selectedROI, fullfile(centralityFolder, roiActivityPeakSize, 'ByP'), true, selectedROISplitDepth1);
+
+       snapnow;
        fclose('all');
        close all;
     end  
@@ -396,17 +508,20 @@ function mainRunnerNeuronTreeAndActivityAnalysis_V3
     add(currentResultsSlideByH_Dendogram.Children(1), Paragraph('Cluster By Pks'));
     add(currentResultsSlideByP_Dendogram.Children(1), Paragraph('Cluster By Percentage'));
     
+    snapnow;
     close(ppt);
     
     close all;
+    fclose all;
+    
 end
  
-function index_presentaion = plotResultesByClusterType(isFlipMap, event_count, currentResultsSlide, currentResultsSlide_s, roiActivityDistanceMatrix, clusterType, selectedROI, roiSortedByCluster, outputpathCurr, roiActivityDistanceFunction, roiActivityPeakSize, gRoi, roiTreeDistanceMatrix, selectedROISplitDepth3, selectedROISplitDepth1, index_presentaion, selectedROITable, i_cluster, index_apical)
+function index_presentaion = plotResultesByClusterType(doPP, isFlipMap, event_count, currentResultsSlide, currentResultsSlide_s, roiActivityDistanceMatrix, clusterType, selectedROI, roiSortedByCluster, outputpathCurr, roiActivityDistanceFunction, roiActivityPeakSize, gRoi, roiTreeDistanceMatrix, selectedROISplitDepth3, selectedROISplitDepth1, index_presentaion, selectedROITable, i_cluster, index_apical, currentResultsSlide_no1)
         import mlreportgen.ppt.*
     
         figDist = figure;
         hold on;
-        title({'ROI Activity Distance'});
+        title({'ROI Activity Distance', ['events:', num2str(event_count)]});
         xticks(1:length(selectedROI));
         yticks(1:length(selectedROI));
         m = imagesc(roiActivityDistanceMatrix(roiSortedByCluster, roiSortedByCluster));
@@ -420,10 +535,14 @@ function index_presentaion = plotResultesByClusterType(isFlipMap, event_count, c
         colormap(cmap);
         
         set(m,'AlphaData',~isnan(roiActivityDistanceMatrix(roiSortedByCluster, roiSortedByCluster)))
+                
+        for index_roi = 1:length(selectedROI)
+            labelsNames(index_roi) = {sprintf('roi%d', sscanf(selectedROI{index_roi}, 'roi%d'))};
+        end
         
-        xticklabels(selectedROI(roiSortedByCluster));
+        xticklabels(labelsNames(roiSortedByCluster));
         xtickangle(90);
-        yticklabels(selectedROI(roiSortedByCluster));
+        yticklabels(labelsNames(roiSortedByCluster));
         picNameFile = [outputpathCurr, '\' , clusterType, '\DistMatrixActivity_', roiActivityDistanceFunction, '_eventsSize', roiActivityPeakSize];
         mysave(figDist, picNameFile);  
 
@@ -455,92 +574,52 @@ function index_presentaion = plotResultesByClusterType(isFlipMap, event_count, c
             mysave(figDendrogram, [outputpathCurr, '\' , clusterType, '\DendrogramROIActivity']);
         end
         
-        pictureNames = plotROIDistMatrixTreeVSActivity(event_count, gRoi, [outputpathCurr, '\' , clusterType],selectedROISplitDepth1, selectedROISplitDepth1, roiTreeDistanceMatrix, roiActivityDistanceMatrix, true, roiActivityDistanceFunction, roiActivityPeakSize, selectedROI, index_apical);
+        pictureNames = plotROIDistMatrixTreeVSActivity(event_count, gRoi, [outputpathCurr, '\' , clusterType],selectedROISplitDepth1, selectedROISplitDepth1, roiTreeDistanceMatrix, roiActivityDistanceMatrix, true, roiActivityDistanceFunction, roiActivityPeakSize, selectedROI, index_apical, 'Correlation', clusterType);
 
-        pictureNames_s = plotROIDistMatrixTreeVSActivity(event_count, gRoi, [outputpathCurr, '\' , clusterType],selectedROISplitDepth1, selectedROISplitDepth3, roiTreeDistanceMatrix, roiActivityDistanceMatrix, false, roiActivityDistanceFunction, roiActivityPeakSize, selectedROI, index_apical);
+        pictureNames_s = plotROIDistMatrixTreeVSActivity(event_count, gRoi, [outputpathCurr, '\' , clusterType],selectedROISplitDepth1, selectedROISplitDepth3, roiTreeDistanceMatrix, roiActivityDistanceMatrix, false, roiActivityDistanceFunction, roiActivityPeakSize, selectedROI, index_apical, 'Correlation', clusterType);
         
         plotRoiDistMatrixTreeVsActivityForDepthCompare(gRoi, [outputpathCurr, '\' , clusterType],  selectedROITable, roiTreeDistanceMatrix, roiActivityDistanceMatrix, roiActivityDistanceFunction, roiActivityPeakSize);
         
-        if i_cluster ~= -1
+        if i_cluster ~= -1 && doPP
             replace(currentResultsSlide.Children(index_presentaion), Picture([picNameFile '.tif']));       
             replace(currentResultsSlide.Children(index_presentaion + 1), Picture([pictureNames{1} '.tif']));
             replace(currentResultsSlide_s.Children(index_presentaion), Picture([picNameFile '.tif']));       
             replace(currentResultsSlide_s.Children(index_presentaion + 1), Picture([pictureNames_s{1} '.tif']));
             
             index_presentaion = index_presentaion + 2;
+        elseif  doPP
+           replace(currentResultsSlide_no1.Children(1), Picture([picNameFile '.tif']));
+           replace(currentResultsSlide_no1.Children(2), Picture([pictureNames{1} '.tif']));
         end
         
-        if i_cluster == 0      
+        if i_cluster == 0 && doPP
             replace(currentResultsSlide.Children(end - 1), Picture([pictureNames{2} '.tif']));
             replace(currentResultsSlide_s.Children(end - 1), Picture([pictureNames_s{2} '.tif']));
-        end
+        end  
         
+%         calcManelTest(activityMatrix, isPearson, distanceMatrix);
 end
 
-function saveROIBranchingIndexAsLabel(eventWin, gRoi, selectedROISplitDepth1, selectedROI, outputpath, depthNumber, allEventsTable, roiActivity_comb, tr_frame_count)
-    classesMDepth1 = unique(selectedROISplitDepth1);
-    eventStr = [];
-    selectedROISplitDepthToSave1 = selectedROISplitDepth1;
-    for indexC = 1:length(classesMDepth1)
-        if classesMDepth1(indexC) == -1
-            eventStr = [eventStr 'ND' '_'];
-            labelsLUT(indexC) = {'ND'};
-        
-        else
-            eventStr = [eventStr gRoi.Nodes(classesMDepth1(indexC),:).Name{1} '_'];
-            labelsLUT(indexC) = gRoi.Nodes(classesMDepth1(indexC),:).Name(1);
-        end
-        
-        cls(indexC, :) = getTreeColor('within', indexC);
-        selectedROISplitDepthToSave1(selectedROISplitDepth1 == classesMDepth1(indexC)) = indexC;
+function saveDataForHS(gRoi, allEventsTable, clusterType, roiActivity, roiActivity_comb, roiActivityNames, outputpath, colorMatrix1, colorMatrix2, classesD1, classesD2, selectedROISplitDepth1, selectedROISplitDepth3)
+    
+    switch clusterType
+        case 'ByH'
+            clusterResults = allEventsTable.clusterByH;
+        case 'ByP'
+            clusterResults = allEventsTable.clusterByRoiPrecantage;
     end
-    
-    roiTableLabelDepth1.roiNames =  selectedROI;
-    roiTableLabelDepth1.labelsLUT = labelsLUT;
-    roiTableLabelDepth1.eventsStr = eventStr;    
-    roiTableLabelDepth1.cls = cls;
-    roiTableLabelDepth1.labels = selectedROISplitDepthToSave1;
-    
-    for events_index = 1:size(allEventsTable, 1)
-        event_curr_loc = (allEventsTable.pks(events_index)-eventWin):(allEventsTable.pks(events_index)+eventWin);
-        
-        if sum(event_curr_loc < 0) > 0
-            event_curr_loc = 1:(eventWin*2);
-        end
-        
-        if sum(event_curr_loc > size(roiActivity_comb, 1)) > 0
-            event_curr_loc = (size(roiActivity_comb, 1) - (eventWin*2)):size(roiActivity_comb, 1);
-        end
-        
-        for roiIndex = 1:length(selectedROI)
-            roiTableLabelDepth1.activity.dataEvents(roiIndex, 1:length(event_curr_loc), events_index) = roiActivity_comb(event_curr_loc,roiIndex);
-        end
-        
-        roiTableLabelDepth1.activity.labels(events_index) = allEventsTable.clusterByH(events_index);
-    end
-    
-    for trialIndex = 1:(size(roiActivity_comb, 1) / tr_frame_count)
-         for roiIndex = 1:length(selectedROI)
-            roiTableLabelDepth1.activity.dataTrials(roiIndex, 1:tr_frame_count, trialIndex) = roiActivity_comb(((trialIndex - 1) * tr_frame_count + 1):(trialIndex * tr_frame_count),roiIndex);
-         end  
-    end    
-    
-    save([outputpath, '\structuralTreeLabels_depth', num2str(depthNumber) '.mat'], 'roiTableLabelDepth1');
-end
 
-function saveDataForHS(allEventsTable, roiActivity, roiActivity_comb, roiActivityNames, outputpath, colorMatrix1, colorMatrix2)
-
-    classes = unique(allEventsTable.clusterByH);
+    classes = unique(clusterResults);
     classes(end + 1) = 0;
      
      for i = 1:length(classes)
         nameC = ['cluster_', num2str(classes(i))];
-        resultsData.(nameC) = ones(size(roiActivity)) .* -100;
-        resultsData_comb.(nameC) = ones(size(roiActivity_comb)) .* -100;        
+        resultsData.(nameC) = nan(size(roiActivity));
+        resultsData_comb.(nameC) = nan(size(roiActivity_comb));        
      end
      
      for index = 1:size(allEventsTable, 1)
-         nameC = ['cluster_', num2str(allEventsTable.clusterByH(index))];
+         nameC = ['cluster_', num2str(clusterResults(index))];
         
          resultsData.(nameC)(allEventsTable.start(index):(min(allEventsTable.event_end(index), allEventsTable.pks(index) + 20)), :) = ...
              roiActivity(allEventsTable.start(index):(min(allEventsTable.event_end(index), allEventsTable.pks(index) + 20)), :);
@@ -558,13 +637,14 @@ function saveDataForHS(allEventsTable, roiActivity, roiActivity_comb, roiActivit
      for i = 1:length(classes)
         nameC = ['cluster_', num2str(classes(i))];
         tmp = resultsData.(nameC);
-        tmp(tmp(:, 1) == -100, :) = [];
-        save([outputpath, '\roiActivityRaw_ByEvents_' num2str(classes(i)) '.mat'], 'tmp', 'roiActivityNames', 'colorMatrix1', 'colorMatrix2')
+        tmp(isnan(tmp(:, 1)), :) = [];
+        save([outputpath, '\roiActivityRaw_' clusterType '_ByEvents_' num2str(classes(i)) '.mat'], 'tmp', 'roiActivityNames', 'colorMatrix1', 'colorMatrix2')
         
         tmp = [];
         tmp = resultsData_comb.(nameC);
-        tmp(tmp(:, 1) == -100, :) = [];
-        save([outputpath, '\roiActivityComb_ByEvents_' num2str(classes(i)) '.mat'], 'tmp', 'roiActivityNames', 'colorMatrix1', 'colorMatrix2')     
+        tmp(isnan(tmp(:, 1)), :) = [];
+        save([outputpath, '\roiActivityComb_' clusterType '_ByEvents_' num2str(classes(i)) '.mat'], 'tmp', 'roiActivityNames', 'colorMatrix1', 'colorMatrix2')     
      end
  
+     plotPCAResults(classes, resultsData, roiActivityNames, colorMatrix1, colorMatrix2, outputpath, clusterType, classesD1, classesD2, gRoi, selectedROISplitDepth1, selectedROISplitDepth3);
 end

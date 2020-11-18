@@ -62,6 +62,7 @@ function plotRoiDistMatrixTreeVsActivityForDepthCompare(gRoi, outputpath, mainTr
 
     plotGraphWithROI(gRoi, [outputpath, '\GraphWithROIDepth_' num2str(length(classesM))], nodesColor, {'Graph Depth'})
     
+    snapnow;
     fclose('all');
     close all;
     clear resultsT;

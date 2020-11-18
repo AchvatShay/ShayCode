@@ -36,7 +36,7 @@ function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, 
      
     figGraph = figure;
     plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
-    title({'Roi ByActivity'});
+    title({'Roi ByActivity cluster By H '});
     colorbar;
     colormap('jet');
     caxis([min(averageActivityForROIByH), max(averageActivityForROIByH)]);
@@ -55,7 +55,7 @@ function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, 
      
     figGraph = figure;
     plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
-    title({'Roi ByActivity'});
+    title({'Roi ByActivity Cluster ByP'});
     colorbar;
     colormap('jet');
     caxis([min(averageActivityForROIByP), max(averageActivityForROIByP)]);

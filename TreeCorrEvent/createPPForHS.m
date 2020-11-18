@@ -1,8 +1,9 @@
 function createPPForHS
-    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM01\10.22.19_Tuft\Analysis\N1\Structural_VS_Functional\14-10-20\Run1\HSActivity\no_behave\HS\";
+    outputpath = "C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM04\08_18_19_tuft_Final_Version\Analysis\N2\Structural_VS_Functional\2-11-20\Run1\no_behave\HSActivity\HS\";
     outputpath = char(outputpath);
     
-    clusterList = {'c0', 'c1', 'c2', 'c3', 'c4'};
+    clusterList = {'c0', 'c1', 'c2', 'c3'};
+%     clusterList = {'c0', 'c1', 'c2', 'c3', 'c4'};
     
 
     import mlreportgen.ppt.*
@@ -22,12 +23,12 @@ function createPPForHS
     
     for i = 1:length(clusterList)
         replace(currentResultsSlide.Children(end - 1), Picture([outputpath '\' clusterList{i} '\GraphWithROI_2.tif']));
-        replace(currentResultsSlide_s.Children(end - 1), Picture([outputpath '\' clusterList{i} '\GraphWithROI_2.tif']));
+        replace(currentResultsSlide_s.Children(end - 1), Picture([outputpath '\' clusterList{i} '\GraphWithROI_4.tif']));
 
         replace(currentResultsSlide.Children(index_presentaion), Picture([outputpath '\' clusterList{i} '\DistMatrixActivity_HS.tif']));       
-        replace(currentResultsSlide.Children(index_presentaion + 1), Picture([outputpath '\' clusterList{i} '\ActivityDistVSDendriticDistForROI_HS_eventsSizeHS_numofTreeDepth2.tif']));
+        replace(currentResultsSlide.Children(index_presentaion + 1), Picture([outputpath '\' clusterList{i} '\ActivityDistVSDendriticDistForROI_HS_eventsSize' clusterList{i} '_numofTreeDepth2.tif']));
         replace(currentResultsSlide_s.Children(index_presentaion), Picture([outputpath '\' clusterList{i} '\DistMatrixActivity_HS.tif']));       
-        replace(currentResultsSlide_s.Children(index_presentaion + 1), Picture([outputpath '\' clusterList{i} '\ActivityDistVSDendriticDistForROI_HS_eventsSizeHS_numofTreeDepth2.tif']));
+        replace(currentResultsSlide_s.Children(index_presentaion + 1), Picture([outputpath '\' clusterList{i} '\ActivityDistVSDendriticDistForROI_HS_eventsSize' clusterList{i} '_numofTreeDepth4.tif']));
 
         index_presentaion = index_presentaion + 2;
     end

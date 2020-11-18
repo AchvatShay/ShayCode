@@ -1,4 +1,4 @@
-function [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByPrecantage] = calcROIDistanceInActivity_WindowEventPearson_V3(roiActivity, roiActivityNames, selectedROI, all_event_table, typeCom, clusterNum, clusterCount)
+function [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByPrecantage] = calcROIDistanceInActivity_WindowEventCov_V3(roiActivity, roiActivityNames, selectedROI, all_event_table, typeCom, clusterNum)
     
     for index = 1:length(selectedROI)
         activitylocation = strcmpi(roiActivityNames, selectedROI{index});
@@ -6,8 +6,8 @@ function [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByPrecantage] =
         for secIndex = 1:length(selectedROI)
             activitySeclocation = strcmp(roiActivityNames, selectedROI{secIndex});
            
-            locationToCompareByH = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByH), activitylocation, activitySeclocation, clusterCount);
-            locationToCompareByPrecantage = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByRoiPrecantage), activitylocation, activitySeclocation, clusterCount);
+            locationToCompareByH = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByH), activitylocation, activitySeclocation);
+            locationToCompareByPrecantage = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByRoiPrecantage), activitylocation, activitySeclocation);
             
             currentROIActivityByH = roiActivity(locationToCompareByH, activitylocation);
             secROIActivityByH = roiActivity(locationToCompareByH, activitySeclocation);
@@ -19,21 +19,21 @@ function [roiActivityDistanceMatrixByH, roiActivityDistanceMatrixByPrecantage] =
             if isempty(locationToCompareByH)
                 roiActivityDistanceMatrixByH(index, secIndex) = nan;
             else   
-                corrEventsPeaksROIByH = corr([currentROIActivityByH, secROIActivityByH], 'type', 'Pearson');
+                corrEventsPeaksROIByH = cov(currentROIActivityByH, secROIActivityByH);
                 roiActivityDistanceMatrixByH(index, secIndex) = corrEventsPeaksROIByH(1, 2);
             end         
             
             if isempty(locationToCompareByPrecantage)
                 roiActivityDistanceMatrixByPrecantage(index, secIndex) = nan;
             else   
-                corrEventsPeaksROIByP = corr([currentROIActivityByP, secROIActivityByP], 'type', 'Pearson');
+                corrEventsPeaksROIByP = cov(currentROIActivityByP, secROIActivityByP);
                 roiActivityDistanceMatrixByPrecantage(index, secIndex) = corrEventsPeaksROIByP(1, 2);
             end
         end
     end
 end
 
-function locationToCompare = getLocTocompare(typeCom, clusterNum, all_event_table, indexByCluster, activitylocation, activitySeclocation, clusterCount)
+function locationToCompare = getLocTocompare(typeCom, clusterNum, all_event_table, indexByCluster, activitylocation, activitySeclocation)
     eventsIncluded = zeros(1, size(all_event_table, 1));
     for indexEvent = 1:size(all_event_table, 1)
         currentEventROIIndex = all_event_table.roisEvent{indexEvent};
@@ -61,8 +61,8 @@ function locationToCompare = getLocTocompare(typeCom, clusterNum, all_event_tabl
         startEventListBycluster = startEventList;
         endEventListBycluster = endEventList;
     elseif clusterNum == -1
-        startEventListBycluster = startEventList(indexByCluster ~= clusterCount);
-        endEventListBycluster = endEventList(indexByCluster ~= clusterCount);
+        startEventListBycluster = startEventList(indexByCluster ~= 1);
+        endEventListBycluster = endEventList(indexByCluster ~= 1);
     else
         startEventListBycluster = startEventList(indexByCluster == clusterNum);
         endEventListBycluster = endEventList(indexByCluster == clusterNum);

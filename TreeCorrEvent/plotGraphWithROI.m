@@ -1,9 +1,8 @@
 function plotGraphWithROI(gRoi, filename, ColorN, titlePG)
     figGraph = figure;
     
-    labelsNames = cell(1, length(gRoi.Nodes.Name));
+    labelsNames = gRoi.Nodes.Name;
     f_r = find(contains(gRoi.Nodes.Name', 'roi') == 1);
-    labelsNames(:) = {'bp'};
     
     for index_roi = f_r
         labelsNames(index_roi) = {sprintf('roi%d', sscanf(gRoi.Nodes.Name{index_roi}, 'roi%d'))};

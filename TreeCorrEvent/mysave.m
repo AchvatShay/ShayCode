@@ -7,7 +7,7 @@ mkNewFolder(pth);
 if ~exist('ext','var') || isempty(ext)
 saveas(f,[filename '.fig'],'fig');
 saveas(f,[filename '.tif'],'tif');
-print( f, '-depsc', [filename '.eps']);
+% print( f, '-depsc', [filename '.eps']);
 else
     switch ext
         case 'tif'

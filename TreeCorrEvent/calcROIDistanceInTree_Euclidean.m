@@ -1,8 +1,6 @@
-function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath)
+function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath, selectedROISplitDepth1)
     roiTreeDistanceMatrix = zeros(length(selectedROI), length(selectedROI));
-    tickLabels = [];
     for index = 1:length(selectedROI)
-        tickLabels{index} = selectedROI{index};
         for secIndex = 1:length(selectedROI)
             fNode = gRoi.Nodes(findnode(gRoi,selectedROI{index}), :);
             sNode = gRoi.Nodes(findnode(gRoi,selectedROI{secIndex}), :);
@@ -15,27 +13,38 @@ function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree
     
     y = squareform(roiTreeDistanceMatrix);
     l = linkage(y, 'single');
-    c = cluster(l,'maxclust',clusterNumber);
+    
+    leafOrder = optimalleaforder(l,y);
           
     figDendrogram = figure;
-    dendrogram(l, 'Labels', tickLabels, 'ColorThreshold', 'default');
+    dendrogram(l, 'Labels', selectedROI, 'ColorThreshold', 'default', 'Reorder', leafOrder);
+    xtickangle(90);
+    
+    title('Tree Structure Dendrogram');
     mysave(figDendrogram, [outputpath, '\DendrogramROIEuclideanDist']);
     
-    [~, roiSortedByCluster] = sort(c);
-  
+    roiSortedByCluster = leafOrder;
     
+    if selectedROISplitDepth1(roiSortedByCluster(1)) > min(selectedROISplitDepth1)
+        roiSortedByCluster = roiSortedByCluster(end:-1:1);
+    end
+    
+    for index_roi = 1:length(selectedROI)
+        labelsNames(index_roi) = {sprintf('roi%d', sscanf(selectedROI{index_roi}, 'roi%d'))};
+    end
+   
     figDist = figure;
     hold on;
-    title({'ROI Distance'});
+    title({'ROI Structure Distance'});
     xticks(1:length(selectedROI));
     yticks(1:length(selectedROI));
     imagesc(roiTreeDistanceMatrix(roiSortedByCluster, roiSortedByCluster));
     colorbar
     colormap(jet);
         
-    xticklabels(tickLabels(roiSortedByCluster));
+    xticklabels(labelsNames(roiSortedByCluster));
     xtickangle(90);
-    yticklabels(tickLabels(roiSortedByCluster));
+    yticklabels(labelsNames(roiSortedByCluster));
     
     mysave(figDist, [outputpath, '\DistMatrixROIStructure']);    
 end

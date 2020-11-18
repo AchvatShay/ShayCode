@@ -8,10 +8,12 @@ function [speedResultsBehave, accelResultsBehave, speedResultsActivity, accelRes
     treadmilASTimeTable = table2timetable(treadmilDataNormal, 'RowTimes', 'twoP');
     treadmilASTimeTable = retime(treadmilASTimeTable, 'secondly', 'mean');
     
-    treadmilDataEvents.twoP = seconds(treadmilDataEvents.twoP);
-    treadmilASTimeTableE = table2timetable(treadmilDataEvents, 'RowTimes', 'twoP');
-    treadmilASTimeTableE = retime(treadmilASTimeTableE, 'secondly', 'mean');
-    
+%     treadmilDataEvents.twoP = seconds(treadmilDataEvents.twoP);
+%     treadmilASTimeTableE = table2timetable(treadmilDataEvents, 'RowTimes', 'twoP');
+%     treadmilASTimeTableE = retime(treadmilASTimeTableE, 'secondly', 'mean');
+%     
+    treadmilASTimeTableE = treadmilASTimeTable;
+
     speedResultsBehave = treadmilASTimeTable.speed;
     accelResultsBehave = treadmilASTimeTable.accel;
     
@@ -33,13 +35,16 @@ function [speedResultsBehave, accelResultsBehave, speedResultsActivity, accelRes
     slop_build_velocity = slopFix(slop_build_velocity, speedResultsActivityEvents, activityFrameR);
     
     slop_build_acc = zeros(size(accelResultsActivityEvents));
-    slop_build_acc(accelResultsActivityEvents ~= 0) = 1;
+    slop_build_acc(accelResultsActivityEvents > 0) = 1;
+    slop_build_acc(accelResultsActivityEvents < 0) = -1;
     
-    slop_build_acc = slopFix(slop_build_acc, accelResultsActivityEvents, activityFrameR);
+%     slop_build_acc = slopFix(slop_build_acc, accelResultsActivityEvents, activityFrameR);
     
     BehaveDataTreadmil.rest = find(slop_build_velocity == 0 & slop_build_acc == 0);
     BehaveDataTreadmil.walkconstant = find(slop_build_velocity ~= 0 & slop_build_acc == 0);
     BehaveDataTreadmil.walkacceleration = find(slop_build_velocity ~= 0 & slop_build_acc ~= 0);
+    BehaveDataTreadmil.walkPosacceleration = find(slop_build_velocity ~= 0 & slop_build_acc > 0);
+    BehaveDataTreadmil.walkNegacceleration = find(slop_build_velocity ~= 0 & slop_build_acc < 0);
     
     res = find(slop_build_velocity(1:end-1) ~= slop_build_velocity(2:end));
     BehaveDataTreadmil.stop = [];
