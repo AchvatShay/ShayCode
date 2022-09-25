@@ -1,27 +1,27 @@
-function plotCentralityForGraph(gRoi, roiActivityDistanceMatrix, selectedROI, outputpath, isFixNeeded, selectedROISplitDepth1)
+function cent_weighted = plotCentralityForGraph(gRoi, roiActivityDistanceMatrix, selectedROI, outputpath, isFixNeeded, selectedROISplitDepth1)
     if isFixNeeded
         roiActivityDistanceMatrix = roiActivityDistanceMatrix + 1;
 %         roiActivityDistanceMatrix = abs(roiActivityDistanceMatrix);
         roiActivityDistanceMatrix(isnan(roiActivityDistanceMatrix)) = 0;
     end
     
-    [cent_weighted, cent_notweighted] = graph_centrality(roiActivityDistanceMatrix, selectedROISplitDepth1);
+    [cent_weighted, cent_notweighted] = graph_centrality(roiActivityDistanceMatrix, selectedROISplitDepth1, false, nan);
     
     centrality_measures = fieldnames(cent_notweighted);
 
 
     for name_i = 1:length(centrality_measures)
-        PlotGraphWithCentrality(cent_notweighted.(centrality_measures{name_i}), gRoi, selectedROI,...
-            fullfile(outputpath, centrality_measures{name_i}, 'noW'), centrality_measures{name_i}, 'noW');
-        
-        
-        PlotGraphWithCentrality(cent_weighted.(centrality_measures{name_i}), gRoi, selectedROI,...
-            fullfile(outputpath, centrality_measures{name_i}, 'W'), centrality_measures{name_i}, 'W');
-        
+%         PlotGraphWithCentrality(cent_notweighted.(centrality_measures{name_i}), gRoi, selectedROI,...
+%             fullfile(outputpath, centrality_measures{name_i}, 'noW'), centrality_measures{name_i}, 'noW');
+%         
+%         
+%         PlotGraphWithCentrality(cent_weighted.(centrality_measures{name_i}), gRoi, selectedROI,...
+%             fullfile(outputpath, centrality_measures{name_i}, 'W'), centrality_measures{name_i}, 'W');
+%         
         t = table(selectedROI,selectedROISplitDepth1, cent_weighted.(centrality_measures{name_i}),...
             cent_notweighted.(centrality_measures{name_i}), 'VariableNames', {'ROI', 'Labels', 'CentralityW', 'CentralityNW'});
         
-        writetable(t, fullfile(outputpath, centrality_measures{name_i}));
+        writetable(t, fullfile(outputpath, [centrality_measures{name_i}, '.csv']));
     end     
     
 end

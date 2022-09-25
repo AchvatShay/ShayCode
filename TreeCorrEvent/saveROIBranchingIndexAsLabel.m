@@ -12,7 +12,7 @@ function saveROIBranchingIndexAsLabel(eventWin, gRoi, selectedROISplitDepth1, se
             labelsLUT(indexC) = gRoi.Nodes(classesMDepth1(indexC),:).Name(1);
         end
         
-        cls(indexC, :) = getTreeColor('within', indexC);
+        cls(indexC, :) = getTreeColor('within', indexC, true);
         selectedROISplitDepthToSave1(selectedROISplitDepth1 == classesMDepth1(indexC)) = indexC;
     end
     

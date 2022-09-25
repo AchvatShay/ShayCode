@@ -37,8 +37,8 @@ function [gRoi, rootNodeID, selectedROI] = loadSwcFile(neuronTreeFile, outputpat
              nodesColor(index-1, :) = [0, 0, 1];
         end
         
-        nodesLabel(index-1) = replace(nodesLabel(index-1), '_', '');
-        nodesLabel(index-1) = replace(nodesLabel(index-1), '-', '');
+%         nodesLabel(index-1) = replace(nodesLabel(index-1), '_', '');
+%         nodesLabel(index-1) = replace(nodesLabel(index-1), '-', '');
     end
     
     EdgeTable = table(edgeArray, edgeDistFromParent','VariableNames',{'EndNodes', 'Weight'});
@@ -212,8 +212,8 @@ function plotTree(gRoi, outputpath)
     
     recursivePlot(gRoi)
     
-    [leg, legColor] = getSwcLegPlot();
-    legend(leg, legColor);
+%     [leg, legColor] = getSwcLegPlot();
+%     legend(leg, legColor);
     %TODO------------------------------
     % Save Tree Plot
     mysave(figTree, [outputpath, '\3DTreeWithROI']);
@@ -247,14 +247,21 @@ function [color, name] = getSwcTypeColor(type)
         case 4
             color = [0.6,1,0.6];
             name = 'apical dendrite';
+        case 5
+            color = [0,0,0];
+            name = 'undefined';
+        
     end
 end
 
 function recursivePlot(gRoi)   
   for nIndex = 1:size(gRoi.Nodes.Name, 1)
     if contains(gRoi.Nodes.Name{nIndex}, 'roi')
-        scatter3(gRoi.Nodes.X(nIndex), gRoi.Nodes.Y(nIndex), gRoi.Nodes.Z(nIndex), '*', 'blue', 'HandleVisibility','off');
-        text(gRoi.Nodes.X(nIndex), gRoi.Nodes.Y(nIndex), gRoi.Nodes.Z(nIndex), gRoi.Nodes.Name{nIndex}, 'color', 'blue')
+%         scatter3(gRoi.Nodes.X(nIndex), gRoi.Nodes.Y(nIndex), gRoi.Nodes.Z(nIndex), '*', 'blue', 'HandleVisibility','off');
+%         text(gRoi.Nodes.X(nIndex), gRoi.Nodes.Y(nIndex), gRoi.Nodes.Z(nIndex), gRoi.Nodes.Name{nIndex}, 'color', 'blue')
+        scatter3(gRoi.Nodes.X(nIndex), gRoi.Nodes.Z(nIndex), gRoi.Nodes.Y(nIndex), '*', 'blue', 'HandleVisibility','off');
+        text(gRoi.Nodes.X(nIndex), gRoi.Nodes.Z(nIndex), gRoi.Nodes.Y(nIndex), gRoi.Nodes.Name{nIndex}, 'color', 'blue')
+    
     end
   end
     
@@ -263,6 +270,7 @@ function recursivePlot(gRoi)
     sNode = gRoi.Nodes(findnode(gRoi,gRoi.Edges.EndNodes(index, 2)), :);
     
     [color, ~] = getSwcTypeColor(sNode.Type(1));
-    plot3([fNode.X(1), sNode.X(1)], [fNode.Y(1), sNode.Y(1)], [fNode.Z(1), sNode.Z(1)], 'color', color, 'HandleVisibility','off'); 
+%     plot3([fNode.X(1), sNode.X(1)], [fNode.Y(1), sNode.Y(1)], [fNode.Z(1), sNode.Z(1)], 'color', color, 'HandleVisibility','off'); 
+    plot3([fNode.X(1), sNode.X(1)], [fNode.Z(1), sNode.Z(1)],[fNode.Y(1), sNode.Y(1)], 'color', color, 'HandleVisibility','off'); 
   end
 end

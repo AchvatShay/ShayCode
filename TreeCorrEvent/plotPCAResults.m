@@ -12,13 +12,16 @@ function plotPCAResults(classes, resultsData, roiActivityNames, colorMatrix1, co
         
         [T, ACC2D_depth1] = evalc("svmClassifyAndRand(embedding, selectedROISplitDepth1, selectedROISplitDepth1, 10, '', 1, 0)");
         [T, ACC2D_depth2] = evalc("svmClassifyAndRand(embedding, selectedROISplitDepth3, selectedROISplitDepth3, 10, '', 1, 0)");
-
+        
+        chanceCalc = hist(selectedROISplitDepth1, unique(selectedROISplitDepth1));
+        chanceCalc = chanceCalc/sum(chanceCalc);
+        
         figPCA = figure;
         hold on;
         
         leg = [];
         for k = 1:length(classesD1)
-            leg(k) = plot(0,0, 'Color', getTreeColor('within',k), 'LineWidth', 1.5);
+            leg(k) = plot(0,0, 'Color', getTreeColor('within',k, true), 'LineWidth', 1.5);
             legColor(k) = gRoi.Nodes.Name(classesD1(k));
         end
        
@@ -29,7 +32,7 @@ function plotPCAResults(classes, resultsData, roiActivityNames, colorMatrix1, co
         
         xlabel('PC1');
         ylabel('PC2');
-        title({sprintf('PCA %s, Type %s',nameC, clusterType), 'Depth 1',  sprintf('accuracy mean %f, std %f', ACC2D_depth1.mean, ACC2D_depth1.std)});
+        title({sprintf('PCA %s, Type %s',nameC, clusterType), 'Depth 1',  sprintf('accuracy mean %f, std %f, chance %f,', ACC2D_depth1.mean, ACC2D_depth1.std, max(chanceCalc))});
         legend(leg, legColor);
         legend('Location', 'best')
         
@@ -40,7 +43,7 @@ function plotPCAResults(classes, resultsData, roiActivityNames, colorMatrix1, co
         
         leg = [];
         for k = 1:length(classesD2)
-            leg(k) = plot(0,0, 'Color', getTreeColor('within',k), 'LineWidth', 1.5);
+            leg(k) = plot(0,0, 'Color', getTreeColor('within',k, false, length(classesD1)), 'LineWidth', 1.5);
             legColor(k) = gRoi.Nodes.Name(classesD2(k));
         end
         

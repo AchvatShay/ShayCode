@@ -20,7 +20,7 @@ function printClusterResults(clusterVector, clusterCount, meanCombActivity, all_
     
     
     xlim([1, size(meanCombActivity, 1)]);
-    ylim([-1, 5]);
+%     ylim([-1, 5]);
     
     sb2 = subplot(8, 1, 8:8);
     imagesc(meanCombActivity');

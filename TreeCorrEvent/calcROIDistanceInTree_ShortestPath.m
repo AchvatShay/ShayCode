@@ -1,4 +1,4 @@
-function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROI, outputpath, selectedROISplitDepth1)
+function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_ShortestPath(gRoi, selectedROI, outputpath, selectedROISplitDepth1, reverseHeatMap)
     roiTreeDistanceMatrix = zeros(length(selectedROI.ID), length(selectedROI.ID));
     roiTreeDistanceMatrixUnW = zeros(length(selectedROI.ID), length(selectedROI.ID));
     tickLabels = [];
@@ -27,10 +27,10 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
     
     leafOrder = optimalleaforder(l,y);
     
-    dendrogram(l, 'Labels', tickLabels, 'reorder', leafOrder);
+    dendrogram(l, size(roiTreeDistanceMatrixUnW, 1), 'Labels', tickLabels, 'reorder', leafOrder);
     xtickangle(90);
     title('Tree Structure Dendrogram');
-    mysave(figDendrogram, [outputpath, '\DendrogramROIShortestPathDist']);
+    mysave(figDendrogram, [outputpath, '\DendrogramROITreeDist']);
     
     roiSortedByCluster = leafOrder;    
 
@@ -38,6 +38,9 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
         roiSortedByCluster = roiSortedByCluster(end:-1:1);
     end
     
+    if  reverseHeatMap
+        roiSortedByCluster = roiSortedByCluster(end:-1:1);
+    end
     
     for index_roi = 1:length(tickLabels)
         labelsNames(index_roi) = {sprintf('roi%d', sscanf(tickLabels{index_roi}, 'roi%d'))};

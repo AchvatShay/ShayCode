@@ -1,4 +1,4 @@
-function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetector_activity, comb_activity] = calcRoiEventDetectorByMLSpike_V3(dataCurROI, ImageSampleTime, frameNum, aV, outputpath, activityIndex, clusterCount, roiName, sigmaChangeValue, roiCount)       
+function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetector_activity, comb_activity] = calcRoiEventDetectorByMLSpike_V3(dataCurROI, ImageSampleTime, frameNum, aV, outputpath, activityIndex, clusterCount, roiName, sigmaChangeValue, roiCount, runMLS, thresholdForGn, EventsDetectionSpikeRate)       
     traceSig            = dataCurROI;
         
     sampFreq        = 1/ImageSampleTime;
@@ -8,45 +8,38 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
     SpikeTrainPks  = [];
     SpikeTrainH = [];
     max_index = [];
-%     
-    % parameters
-    par = tps_mlspikes('par');
-    par.dt = ImageSampleTime;
-%     par.algo.estimate = 'proba';
-    % (use autocalibrated parameters)
-    par.a = aV;
-%     
-%     par.tau = 0.6;
+    
+    
+    if runMLS
+        par = tps_mlspikes('par');
+        par.dt = ImageSampleTime;
+        par.a = aV;
+        if sigmaChangeValue ~= 0
+            par.finetune.sigma = sigmaChangeValue;
+        end
+        
+        if ~isnan(EventsDetectionSpikeRate)
+            par.finetune.spikerate = EventsDetectionSpikeRate;
+        end
+        
+        par.drift.parameter = .015;
+        par.dographsummary = false;
 
-    if sigmaChangeValue ~= 0
-        par.finetune.sigma = sigmaChangeValue;
+        [spk, fit, drift, parest] = spk_est(traceSig,par);
+
+    % -------------------------------------------------------------------------------    
+        countVec = fn_timevector(spk, ImageSampleTime, 'count');
+    else
+        spkmin = thresholdForGn*GetSn(traceSig);
+        model_ar = 'ar2';
+        fr = ImageSampleTime;
+        decay_time = 0.5;
+        lam = choose_lambda(exp(-1/(fr*decay_time)),GetSn(traceSig),0.99);
+        [cc,spk,opts_oasis] = deconvolveCa(traceSig,model_ar,'method','thresholded','optimize_pars',true,'maxIter',20,...
+                                    'window',150,'lambda',lam,'smin',spkmin);
+        fit = cc;                        
+        countVec = spk ~= 0;
     end
-%     
-
-% (the OGB saturation and drift parameters are fixed)
-%     par.saturation = 0.1;
-    par.drift.parameter = .015;
-    % (do not display graph summary)
-    par.dographsummary = false;
-
-    [spk, fit, drift, parest] = spk_est(traceSig,par);
-    
-% -------------------------------------------------------------------------------    
-    countVec = fn_timevector(spk, ImageSampleTime, 'count');
-    
-    
-%     Test ----------------------------------------------------------------
-%     spkmin = 1.5*GetSn(traceSig);
-%     model_ar = 'ar2';
-%     fr = ImageSampleTime;
-%     decay_time = 0.5;
-%     lam = choose_lambda(exp(-1/(fr*decay_time)),GetSn(traceSig),0.99);
-%     [cc,spk,opts_oasis] = deconvolveCa(traceSig,model_ar,'method','thresholded','optimize_pars',true,'maxIter',20,...
-%                                 'window',150,'lambda',lam,'smin',spkmin);
-%     fit = cc;                        
-%     countVec = spk ~= 0;
-% -------------------------------------------------------------------------------
-    
     
     countVec((end + 1) : length(traceSig)) = 0;
     
@@ -147,7 +140,7 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
         endPos = endPos + start_pos;
         
         
-        if endPos - start_pos == 3 & all(fit((start_pos + 1) : (endPos - 1)) == fit(start_pos + 1))
+        if isempty(endPos) || (endPos - start_pos == 3 & all(fit((start_pos + 1) : (endPos - 1)) == fit(start_pos + 1)))
             continue
         end
         
@@ -189,7 +182,7 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
         endPos2 = find(countVec(start_pos:nextPos) == 0, 1, 'last');
         endPos2 = endPos2 + start_pos - 1;
         
-        afterS = find(fit(endPos:endPos2) <= 0.9 * fit(maxPos), 1);
+        afterS = find(fit(endPos:endPos2) <= 0.9 * fit(maxPos(1)), 1);
         afterS = afterS + endPos - 1;
         end_find_res = find(abs(v_calc(afterS:nextPos)) < 0.0001, 1);
         
@@ -202,7 +195,7 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
         
         SpikeTrainStart(spk_index) = start_pos;
         SpikeTrainEnd(spk_index) = end_find_res;
-        SpikeTrainPks(spk_index) = maxPos;
+        SpikeTrainPks(spk_index) = maxPos(1);
         
         [SpikeTrainH(spk_index), max_index(spk_index)] = max(traceSig(SpikeTrainStart(spk_index):SpikeTrainEnd(spk_index))); 
         max_index(spk_index) = max_index(spk_index) + SpikeTrainStart(spk_index) - 1;       
@@ -214,7 +207,7 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
         tr_indexPKS = floor(SpikeTrainPks(i) ./ frameNum) + 1;
        
         if tr_indexStart ~= tr_indexPKS
-             SpikeTrainStart(i) = SpikeTrainPks(i);
+             SpikeTrainStart(i) = (tr_indexPKS - 1) * frameNum + 1;
         end
     end
     
@@ -238,7 +231,7 @@ function [SpikeTrainStart, SpikeTrainEnd, SpikeTrainPks,SpikeTrainH, eventDetect
     plot(max_index, SpikeTrainH, 'o');
     
     xlim([1, size(traceSig, 1)]);
-    ylim([-1, 5]);
+%     ylim([-1, 5]);
     
     sb2 = subplot(8, 1, 8:8);
     imagesc(traceSig');

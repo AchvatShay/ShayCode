@@ -1,4 +1,8 @@
-function plotGraphWithROI(gRoi, filename, ColorN, titlePG)
+function figGraph = plotGraphWithROI(gRoi, filename, ColorN, titlePG, markerSize)
+    if nargin == 4
+        markerSize = 3;
+    end
+
     figGraph = figure;
     
     labelsNames = gRoi.Nodes.Name;
@@ -9,7 +13,7 @@ function plotGraphWithROI(gRoi, filename, ColorN, titlePG)
     
     end
   
-    plot(gRoi, 'NodeColor', ColorN, 'NodeLabel', labelsNames, 'NodeFontWeight', 'bold');
+    plot(gRoi, 'NodeColor', ColorN, 'NodeLabel', labelsNames, 'NodeFontWeight', 'bold', 'MarkerSize', markerSize);
     title(titlePG);
     figGraph.Position = [figGraph.Position(1), figGraph.Position(2), figGraph.Position(3) + 200, figGraph.Position(4) + 70]; 
     mysave(figGraph, filename);

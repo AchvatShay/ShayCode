@@ -37,6 +37,12 @@ function [BehaveData, NAMES, trials_label] = loadBDAFile(activityfileTPAFolder, 
             BehaveData.(eventTName).startTiming = zeros(fileNumRoi, 1);
             BehaveData.(eventTName).endTiming = zeros(fileNumRoi, 1);
             BehaveData.(eventTName).count = zeros(fileNumRoi, 1);
+            
+             eventTName = ['secTone' eventNameList{eventName_i}(isletter(eventNameList{eventName_i}))];
+            BehaveData.(eventTName).indicator = zeros(fileNumRoi, framNum); 
+            BehaveData.(eventTName).startTiming = zeros(fileNumRoi, 1);
+            BehaveData.(eventTName).endTiming = zeros(fileNumRoi, 1);
+            BehaveData.(eventTName).count = zeros(fileNumRoi, 1);
         end
             
     end
@@ -83,6 +89,17 @@ function [BehaveData, NAMES, trials_label] = loadBDAFile(activityfileTPAFolder, 
                 eventTName = ['firstTone' eventname(isletter(eventname))];
 
                 if BehaveData.(eventTName).startTiming(trial_i) == 0 && timeInd(1) >= toneTimeFrame
+                    BehaveData.(eventTName).indicator(trial_i, :) = 0;
+                    BehaveData.(eventTName).indicator(trial_i, timeInd(1):timeInd(2)) = 1;
+                    BehaveData.(eventTName).startTiming(trial_i) = timeInd(1);
+                    BehaveData.(eventTName).endTiming(trial_i) = timeInd(2);
+                    BehaveData.(eventTName).count(trial_i) = BehaveData.(eventTName).count(trial_i) + 1;
+                end
+                
+                eventTName = ['secTone' eventname(isletter(eventname))];
+
+                if BehaveData.(eventTName).startTiming(trial_i) == 0 && timeInd(1) >= toneTimeFrame &&...
+                        BehaveData.(['firstTone' eventname(isletter(eventname))]).startTiming(trial_i) < timeInd(1)
                     BehaveData.(eventTName).indicator(trial_i, :) = 0;
                     BehaveData.(eventTName).indicator(trial_i, timeInd(1):timeInd(2)) = 1;
                     BehaveData.(eventTName).startTiming(trial_i) = timeInd(1);

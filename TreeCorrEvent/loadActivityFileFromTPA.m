@@ -12,8 +12,13 @@ function [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromT
         end
         for m = 1:length(usrData.strROI)
             currentData = [];
+            
             currentROIName = sprintf('roi%05d', extractROIstr(usrData.strROI{m}.Name));
             
+            if usrData.strROI{m}.Name(end-1) == '_'
+                currentROIName = sprintf('%s%s', currentROIName,  usrData.strROI{m}.Name(end));
+            end
+                       
             indexROI = find(strcmp(activity.Properties.VariableNames, currentROIName), 1);
             if isempty(indexROI)&& trialInd ~= 1
                     error('ROI Not exists in all trials');
@@ -46,6 +51,11 @@ function [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromT
     
     roinames = activity.Properties.VariableNames;
     roi_index = 1;
+    
+    if isempty(selectedROI)
+        selectedROI = roinames;
+    end
+    
     for index = 1:length(selectedROI)
         sel_results = [];
         if contains(selectedROI(index), '&')
@@ -81,5 +91,5 @@ function [roiActivity, roiActivityNames, tr_frame_count] = loadActivityFileFromT
 %         end
     end
     
-    writetable(activity,fullfile(outputpath, 'activityFileAsTable.csv'))
+%     writetable(activity,fullfile(outputpath, 'activityFileAsTable.csv'))
 end

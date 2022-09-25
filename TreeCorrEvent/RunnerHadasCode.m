@@ -1,10 +1,10 @@
 function RunnerHadasCode(globalParameters)
-    addpath('C:\Users\Jackie\Desktop\HadasCode\AnalysisProject\MatlabAnalysis');
+    addpath('\\jackie-analysis10\users\Jackie\Desktop\Hadas\AnalysisProject\MatlabAnalysis');
 
     xmlfile = fullfile(globalParameters.MainFolder, 'Shay', globalParameters.AnimalName, globalParameters.DateAnimal, 'XmlByBoth.xml');
     
-    folderAnimal = fullfile(globalParameters.MainFolder, globalParameters.AnimalName);
-    trajpth = '';
+    folderAnimal = fullfile(globalParameters.TPAFolder, globalParameters.AnimalName);
+    trajpth = fullfile('\\192.114.21.82\g\Layer V\Videos', globalParameters.AnimalName , globalParameters.trajFolderName, 'DLC');
     roiListNamesPath = fullfile(globalParameters.outputpath, 'roiActivityRawData.mat');
     
     folderAnimalOutputPath= fullfile(globalParameters.MainFolder, 'Shay', globalParameters.AnimalName);
@@ -42,7 +42,8 @@ function RunnerHadasCode(globalParameters)
                     BdaTpaList = getTrajFiles(BdaTpaList, trajpth, listExperiments(index).name);
 
                     BdaTpaList(1).roiListNamesPath = roiListNamesPath;
-
+                    BdaTpaList(1).predictor = [];
+                    
                     outputPath = strcat(folderAnimalOutputPath , '\' , listExperiments(index).name ,'\Analysis\', globalParameters.neuronNumberName ,'\atogram_printer');
                     mkNewFolder(outputPath);
                     runAnalysis(outputPath, xmlfile, BdaTpaList, 'atogram_printer', 'RoiSplit');
@@ -59,6 +60,11 @@ function RunnerHadasCode(globalParameters)
                     mkNewFolder(outputPath);
                     runAnalysis(outputPath, xmlfile, BdaTpaList, 'centralityAnalysis', 'RoiCorrelation');
 
+                    if globalParameters.isHandreach
+                        outputPath = strcat(folderAnimalOutputPath , '\' , listExperiments(index).name ,'\Analysis\', globalParameters.neuronNumberName ,'\glmAnalysis');
+                        mkNewFolder(outputPath);
+                        runAnalysis(outputPath, xmlfile, BdaTpaList, 'glmAnalysis', 'RoiSplit');
+                    end
                     
                     close all;
                     BdaTpaList = [];

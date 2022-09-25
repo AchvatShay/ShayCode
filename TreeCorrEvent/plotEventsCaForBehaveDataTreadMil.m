@@ -62,7 +62,7 @@ function plotBehaveTreadMil(behave, currentCaTable, win_plot, behaveType, cluste
     s2 = subplot(2, 1, 2);
     hold on;
     H = mseb(timeEvents, meanBehave, stdBehave, [], 0.5);
-    plot(zeros(1, 4), -1:2, '--k', 'LineWidth', 1.5);
+    plot(zeros(1, 4), -0.05:0.05, '--k', 'LineWidth', 1.5);
     
     title({['Behave ' behaveType ' aligned To Ca Events'], ['cluster : ' num2str(cluster_i)]});
     xlabel('Frame');

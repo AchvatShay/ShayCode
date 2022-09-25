@@ -4,7 +4,7 @@ function plotEventsSperation(allEventsTable, roiActivity_comb, selectedROI, sele
     eventSplit = zeros(size(allEventsTable, 1), length(classes));
     
     outputpath = [outputpath, '\EventsPlots\'];
-    
+    mkdir(outputpath);
     for ca_i = 1:size(allEventsTable, 1)        
         for cl = 1:length(classes)
             eventSplit(ca_i, cl) = sum(allEventsTable.roisEvent{ca_i}(selectedROISplitDepth1 == classes(cl))) / sum(selectedROISplitDepth1 == classes(cl));
@@ -79,22 +79,22 @@ function plotHMEvents(allEventsTable, roiActivity_comb, selectedROI, outputpath,
         vectorToCompar = [vectorToCompar, allEventsTable.start(ca_i):allEventsTable.pks(ca_i)];
     end
     
-    activityMatrix = zeros(length(selectedROI), length(selectedROI));
+    activityMatrix = zeros(length(selectedROI), length(selectedROI), 2);
     for roi_i = 1:length(selectedROI)
         for roi_k = (roi_i):length(selectedROI)
             if (roi_k == roi_i)
-                activityMatrix(roi_i, roi_i) = 1;
+                activityMatrix(roi_i, roi_i, 1) = 1;
             else
                 currentROIActivity = roiActivity_comb(vectorToCompar, roi_i);
                 secROIActivity = roiActivity_comb(vectorToCompar, roi_k);
                 
                 if isempty(vectorToCompar)
-                    activityMatrix(roi_i, roi_k) = nan;
-                    activityMatrix(roi_k, roi_i) = nan;
+                    activityMatrix(roi_i, roi_k, 1) = nan;
+                    activityMatrix(roi_k, roi_i, 1) = nan;
                 else   
-                    corrEventsPeaks = corr([currentROIActivity, secROIActivity], 'type', 'Pearson');
-                    activityMatrix(roi_i, roi_k) = corrEventsPeaks(1, 2);
-                    activityMatrix(roi_k, roi_i) = corrEventsPeaks(1, 2);
+                    [corrEventsPeaks, pvalEventsPeaks] = corr([currentROIActivity, secROIActivity], 'type', 'Pearson');
+                    activityMatrix(roi_i, roi_k, :) = [corrEventsPeaks(1, 2), pvalEventsPeaks(1,2)];
+                    activityMatrix(roi_k, roi_i, :) = [corrEventsPeaks(1, 2), pvalEventsPeaks(1,2)];
                 end         
             end
         end 
@@ -105,13 +105,14 @@ function plotHMEvents(allEventsTable, roiActivity_comb, selectedROI, outputpath,
     title({'ROI Activity Distance', ['events:', num2str(size(allEventsTable, 1))]});
     xticks(1:length(selectedROI));
     yticks(1:length(selectedROI));
-    m = imagesc(activityMatrix(roiSortedByCluster, roiSortedByCluster));
+    aM = squeeze(activityMatrix(roiSortedByCluster, roiSortedByCluster, 1));
+    m = imagesc(aM);
     colorbar
     cmap = jet();
 
     colormap(cmap);
 
-    set(m,'AlphaData',~isnan(activityMatrix(roiSortedByCluster, roiSortedByCluster)))
+    set(m,'AlphaData',~isnan(aM))
 
     for index_roi = 1:length(selectedROI)
         labelsNames(index_roi) = {sprintf('roi%d', sscanf(selectedROI{index_roi}, 'roi%d'))};

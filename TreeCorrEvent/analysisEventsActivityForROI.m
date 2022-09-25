@@ -1,5 +1,5 @@
-function analysisEventsActivityForROI(gROI, allEventsTable, selectedROI, selectedROISplitDepth, outputpath, fileName, clusterCount)
-    outputpath = [outputpath, '\behave\'];
+function analysisEventsActivityForROI(gROI, allEventsTable, selectedROI, selectedROISplitDepth, outputpath, fileName, clusterCount, isMainDepth, mainDepthCount)
+    outputpath = [outputpath, '\PrecentagePerSubTrees\'];
     mkdir(outputpath);
     
     classes = unique(selectedROISplitDepth);
@@ -28,22 +28,22 @@ function analysisEventsActivityForROI(gROI, allEventsTable, selectedROI, selecte
             end
         end
         
-        plotResultsA(outputpath, [fileName, '_noWeight', '_sum'], i_cluster, sumActivityForROI_noW, classes, selectedROISplitDepth, 'no weight, Average Sum', gROI, fileID);
-        plotResultsA(outputpath, [fileName, '_WeightHigh', '_sum'], i_cluster, sumActivityForROI_W_PksH, classes, selectedROISplitDepth, 'weight by High(Pks), Average Sum', gROI, fileID);
-        plotResultsA(outputpath, [fileName, '_WeightPrecentage', '_sum'], i_cluster, sumActivityForROI_W_Precentage, classes, selectedROISplitDepth, 'weight by Precentage, Average Sum', gROI, fileID);   
+        plotResultsA(outputpath, [fileName, '_noWeight', '_sum'], i_cluster, sumActivityForROI_noW, classes, selectedROISplitDepth, 'no weight, Average Sum', gROI, fileID,  isMainDepth, mainDepthCount);
+        plotResultsA(outputpath, [fileName, '_WeightHigh', '_sum'], i_cluster, sumActivityForROI_W_PksH, classes, selectedROISplitDepth, 'weight by High(Pks), Average Sum', gROI, fileID,  isMainDepth, mainDepthCount);
+        plotResultsA(outputpath, [fileName, '_WeightPrecentage', '_sum'], i_cluster, sumActivityForROI_W_Precentage, classes, selectedROISplitDepth, 'weight by Precentage, Average Sum', gROI, fileID,  isMainDepth, mainDepthCount);   
         
         if countEvents_noW ~= 0 
             sumActivityForROI_noW = sumActivityForROI_noW ./ countEvents_noW;
             sumActivityForROI_W_PksH = sumActivityForROI_W_PksH ./ countEvents_noW;
             
-            plotResultsA(outputpath, [fileName, '_noWeight', '_precentage'], i_cluster, sumActivityForROI_noW, classes, selectedROISplitDepth, 'no weight, Average Precentage', gROI, fileIDSec);
-            plotResultsA(outputpath, [fileName, '_WeightHigh', '_precentage'], i_cluster, sumActivityForROI_W_PksH, classes, selectedROISplitDepth, 'weight by High(Pks), Average Precentage', gROI, fileIDSec);
+            plotResultsA(outputpath, [fileName, '_noWeight', '_precentage'], i_cluster, sumActivityForROI_noW, classes, selectedROISplitDepth, 'no weight, Average Precentage', gROI, fileIDSec,  isMainDepth, mainDepthCount);
+            plotResultsA(outputpath, [fileName, '_WeightHigh', '_precentage'], i_cluster, sumActivityForROI_W_PksH, classes, selectedROISplitDepth, 'weight by High(Pks), Average Precentage', gROI, fileIDSec,  isMainDepth, mainDepthCount);
         
         end
         
         if countEvents_P ~= 0
             sumActivityForROI_W_Precentage = sumActivityForROI_W_Precentage ./ countEvents_P;
-            plotResultsA(outputpath, [fileName, '_WeightPrecentage', '_precentage'], i_cluster, sumActivityForROI_W_Precentage, classes, selectedROISplitDepth, 'weight by Precentage, Average Precentage', gROI, fileIDSec);   
+            plotResultsA(outputpath, [fileName, '_WeightPrecentage', '_precentage'], i_cluster, sumActivityForROI_W_Precentage, classes, selectedROISplitDepth, 'weight by Precentage, Average Precentage', gROI, fileIDSec,  isMainDepth, mainDepthCount);   
         end
         
     end
@@ -51,7 +51,7 @@ function analysisEventsActivityForROI(gROI, allEventsTable, selectedROI, selecte
     fclose(fileID);
 end
 
-function plotResultsA(outputpath, fileName, i_cluster, sumActivityForROI, classes, selectedROISplitDepth, titleAdd, gROI, fileID)
+function plotResultsA(outputpath, fileName, i_cluster, sumActivityForROI, classes, selectedROISplitDepth, titleAdd, gROI, fileID,  isMainDepth, mainDepthCount)
     formatSpec = 'cluster %d, type: %s, name: %s, mean: %d, std: %d, roi#: %d\n';
     
     fig = figure;
@@ -75,7 +75,8 @@ function plotResultsA(outputpath, fileName, i_cluster, sumActivityForROI, classe
         sum_c = sum(classes(s_t) == selectedROISplitDepth);
         m_c = mean(sumActivityForROI(classes(s_t) == selectedROISplitDepth));
         std_c = std(sumActivityForROI(classes(s_t) == selectedROISplitDepth));
-        color = getTreeColor('within', s_t);
+        
+        color = getTreeColor('within', s_t,  isMainDepth, mainDepthCount);
         name(s_t) = gROI.Nodes.Name(classes(s_t));
         x_tick{end + 1} = name{s_t};
         errorbar(indexT, m_c,std_c,'o', 'Color', color, 'MarkerSize', 6, 'MarkerEdgeColor',color,'MarkerFaceColor',color);
@@ -118,7 +119,7 @@ function plotResultsA(outputpath, fileName, i_cluster, sumActivityForROI, classe
     
     [~,~,anova_stats] = anova1(anovaY, anovaGr);
     
-    if length(classes) > 1
+    if length(classes) > 1 && anova_stats.df ~= 0
         [c,~,h,gnames] = multcompare(anova_stats);
 
         for c_ind = 1:size(c, 1)

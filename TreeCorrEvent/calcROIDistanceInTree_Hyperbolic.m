@@ -1,4 +1,4 @@
-function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROI, outputpath, loranzORPDistMat, selectedROISplitDepth1)
+function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Hyperbolic(gRoi, selectedROI, outputpath, loranzORPDistMat, selectedROISplitDepth1, reverseHeatMap)
    tickLabels = [];
    loranzLocation = zeros(1, length(selectedROI.ID));
    
@@ -19,7 +19,7 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
     dendrogram(l, 'Labels', tickLabels, 'reorder', leafOrder);
     xtickangle(90);
     title('Tree Structure Dendrogram');
-    mysave(figDendrogram, [outputpath, '\DendrogramROIShortestPathDist']);
+    mysave(figDendrogram, [outputpath, '\DendrogramROIHSDist']);
     
     roiSortedByCluster = leafOrder;    
 
@@ -27,6 +27,9 @@ function [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_
         roiSortedByCluster = roiSortedByCluster(end:-1:1);
     end
    
+    if  reverseHeatMap
+        roiSortedByCluster = roiSortedByCluster(end:-1:1);
+    end
     
     figDist = figure;
     hold on;

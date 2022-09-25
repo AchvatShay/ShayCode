@@ -1,4 +1,4 @@
-function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath, selectedROISplitDepth1)
+function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree_Euclidean(gRoi, selectedROI, outputpath, selectedROISplitDepth1, reverseHeatMap)
     roiTreeDistanceMatrix = zeros(length(selectedROI), length(selectedROI));
     for index = 1:length(selectedROI)
         for secIndex = 1:length(selectedROI)
@@ -17,7 +17,7 @@ function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree
     leafOrder = optimalleaforder(l,y);
           
     figDendrogram = figure;
-    dendrogram(l, 'Labels', selectedROI, 'ColorThreshold', 'default', 'Reorder', leafOrder);
+    dendrogram(l,size(roiTreeDistanceMatrix, 1), 'Labels', selectedROI, 'Reorder', leafOrder);
     xtickangle(90);
     
     title('Tree Structure Dendrogram');
@@ -26,6 +26,11 @@ function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree
     roiSortedByCluster = leafOrder;
     
     if selectedROISplitDepth1(roiSortedByCluster(1)) > min(selectedROISplitDepth1)
+        roiSortedByCluster = roiSortedByCluster(end:-1:1);
+    end
+    
+       
+    if  reverseHeatMap
         roiSortedByCluster = roiSortedByCluster(end:-1:1);
     end
     
@@ -41,7 +46,8 @@ function  [roiTreeDistanceMatrix, roiSortedByCluster, l] = calcROIDistanceInTree
     imagesc(roiTreeDistanceMatrix(roiSortedByCluster, roiSortedByCluster));
     colorbar
     colormap(jet);
-        
+    colormap(flipud(jet));
+    
     xticklabels(labelsNames(roiSortedByCluster));
     xtickangle(90);
     yticklabels(labelsNames(roiSortedByCluster));

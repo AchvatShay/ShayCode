@@ -2,7 +2,8 @@ function plotEventCaForBehaveDataHandReach(behaveStartTime,tr_frame_count, allEv
     for i = 0:clusterCount
         if i == 0
             titleText = {'All Ca Events', ['Aligned By: ', behaveName]};
-            currentCaTable = allEventsTable;
+            
+            currentCaTable = allEventsTable(allEventsTable.clusterByH ~= 1, :);
         else
             currentCaTable = allEventsTable(allEventsTable.clusterByH == i,:);
             titleText = {['Cluster ', num2str(i),  ' Ca Events'], ['Aligned By: ', behaveName]};
@@ -16,14 +17,6 @@ function plotEventCaForBehaveDataHandReach(behaveStartTime,tr_frame_count, allEv
         minEventStart = min(eventsStart);
         maxEventEnd = max(eventsEnd);
         
-%         if (minEventStart >= 0)
-%             minEventStart = -20;
-%         end
-%         
-%         if maxEventEnd <= 0
-%             maxEventEnd = 20;
-%         end
-%         
         timeEvents =  minEventStart:maxEventEnd; 
         
         ca_activitySummary = zeros(clusterCount, length(timeEvents));
@@ -53,7 +46,7 @@ function plotEventCaForBehaveDataHandReach(behaveStartTime,tr_frame_count, allEv
                 continue;
             end
             
-            plot(ones(1,5)*eventsStart(ca_i), ca_i:0.1:(ca_i + 0.4), 'Color', getClusterColor(currentCaTable.clusterByH(ca_i)), 'LineWidth', 2.5);
+            plot(ones(1,9)*eventsStart(ca_i), ca_i:0.1:(ca_i + 0.8), 'Color', getClusterColor(currentCaTable.clusterByH(ca_i)), 'LineWidth', 2.5);
             
             timeLocation = find(timeEvents == eventsStart(ca_i),1);
             ca_activitySummary(currentCaTable.clusterByH(ca_i), timeLocation) = ca_activitySummary(currentCaTable.clusterByH(ca_i), timeLocation) + 1;
@@ -65,6 +58,8 @@ function plotEventCaForBehaveDataHandReach(behaveStartTime,tr_frame_count, allEv
         
         ylim([0, size(currentCaTable, 1) + 1]);
         plot(zeros(1, size(currentCaTable, 1)), 1:size(currentCaTable, 1), '--k');
+        plot(ones(1, size(currentCaTable, 1))*-3, 1:size(currentCaTable, 1), '--k');
+        plot(ones(1, size(currentCaTable, 1))*3, 1:size(currentCaTable, 1), '--k');
         ylabel('Ca Event#');
         xlabel('Frame#');
         legend(leg, legColor);
@@ -75,19 +70,29 @@ function plotEventCaForBehaveDataHandReach(behaveStartTime,tr_frame_count, allEv
         s2 = subplot(8, 1, 7:8);
         hold on;
         
+        totalEventsSum = length(currentCaTable.clusterByH);
+        
+        totalEventsClusterSum(1) = sum(currentCaTable.clusterByH == 1);
+        totalEventsClusterSum(2) = sum(currentCaTable.clusterByH == 2);
+        totalEventsClusterSum(3) = sum(currentCaTable.clusterByH == 3);
+        totalEventsClusterSum(4) = sum(currentCaTable.clusterByH == 4);
         
         if (i == 0)
-            plot(timeEvents, sum(ca_activitySummary), 'Color', 'k');
+            plot(timeEvents, sum(ca_activitySummary)./totalEventsSum, 'Color', 'k');
         
             for index_cl = 1:clusterCount
-                plot(timeEvents, ca_activitySummary(index_cl, :), 'Color', getClusterColor(index_cl));
+                plot(timeEvents, ca_activitySummary(index_cl, :)./totalEventsClusterSum(index_cl), 'Color', getClusterColor(index_cl));
             end
         else
-            plot(timeEvents, (ca_activitySummary(i, :)), 'Color', getClusterColor(i));
+            plot(timeEvents, (ca_activitySummary(i, :))./totalEventsClusterSum(i), 'Color', getClusterColor(i));
         end
         
+        ylim([0,1]);
+        
         limitsY = ylim;
-        plot(zeros(1, limitsY(2)), 1:limitsY(2), '--k');
+        plot(zeros(1, 2), [0,1], '--k');
+        plot([-3,-3], [0,1], '--k');
+        plot([3,3], [0,1], '--k');
         
         ylabel('Ca Event# Summary');
         xlabel('Frame#');

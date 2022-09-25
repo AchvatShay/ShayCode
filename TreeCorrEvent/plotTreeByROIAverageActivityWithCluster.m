@@ -1,15 +1,24 @@
-function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, roiActivityNames, selectedROI, all_event_table, typeCom, clusterNum)
+function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, roiActivityNames, selectedROI, all_event_table, typeCom, clusterNum, roiSorted)
     averageActivityForROIByH = zeros(length(selectedROI), 1);
     averageActivityForROIByP = zeros(length(selectedROI), 1);
+    averageActivityForROIByPT = zeros(length(selectedROI), 1);
     
     for index = 1:length(selectedROI)
         activitylocation = strcmpi(roiActivityNames, selectedROI{index});
         
         locationToCompareByH = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByH), activitylocation);
         locationToCompareByPrecantage = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByRoiPrecantage), activitylocation);
+        locationToCompareByPrecantageT = getLocTocompare(typeCom, clusterNum, all_event_table,(all_event_table.clusterByThresholdRoiPrecantage), activitylocation);
         
         currentROIActivityByH = roiActivity(locationToCompareByH, activitylocation);
         currentROIActivityByP = roiActivity(locationToCompareByPrecantage, activitylocation);
+        currentROIActivityByPT = roiActivity(locationToCompareByPrecantageT, activitylocation);
+        
+        if isempty(currentROIActivityByPT)
+            averageActivityForROIByPT(index) = 0;
+        else
+            averageActivityForROIByPT(index) = mean(currentROIActivityByPT);
+        end
         
         if isempty(currentROIActivityByP)
             averageActivityForROIByP(index) = 0;
@@ -25,6 +34,21 @@ function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, 
     end
     
     
+    
+    nodesColor = zeros(length(gRoi.Nodes.Name),3);
+    
+    rgbColors = vals2colormap(averageActivityForROIByPT, 'jet', [min(averageActivityForROIByPT), max(averageActivityForROIByPT)]);
+    
+    for index = 1:length(selectedROI)
+        locRoi = find(strcmp(gRoi.Nodes.Name, selectedROI(index)));
+        nodesColor(locRoi, :) = rgbColors(index,:);
+    end
+     
+    fileName2 = [outputpath, '\GraphWithROI_ColoredActivity' 'ByPT'];
+    
+    plotGraphWithROI(gRoi, fileName2, nodesColor, {'Roi ByActivity cluster By Precentage Threshold'});
+    
+    
     nodesColor = zeros(length(gRoi.Nodes.Name),3);
     
     rgbColors = vals2colormap(averageActivityForROIByH, 'jet', [min(averageActivityForROIByH), max(averageActivityForROIByH)]);
@@ -34,15 +58,9 @@ function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, 
         nodesColor(locRoi, :) = rgbColors(index,:);
     end
      
-    figGraph = figure;
-    plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
-    title({'Roi ByActivity cluster By H '});
-    colorbar;
-    colormap('jet');
-    caxis([min(averageActivityForROIByH), max(averageActivityForROIByH)]);
     fileName2 = [outputpath, '\GraphWithROI_ColoredActivity' 'ByH'];
-    mysave(figGraph, fileName2);
     
+    plotGraphWithROI(gRoi, fileName2, nodesColor, {'Roi ByActivity cluster By H '});
     
     nodesColor = zeros(length(gRoi.Nodes.Name),3);
     
@@ -53,16 +71,33 @@ function plotTreeByROIAverageActivityWithCluster(gRoi, outputpath, roiActivity, 
         nodesColor(locRoi, :) = rgbColors(index,:);
     end
      
-    figGraph = figure;
-    plot(gRoi, 'EdgeLabel',gRoi.Edges.Weight, 'NodeColor', nodesColor);
-    title({'Roi ByActivity Cluster ByP'});
-    colorbar;
-    colormap('jet');
-    caxis([min(averageActivityForROIByP), max(averageActivityForROIByP)]);
     
     fileName2 = [outputpath, '\GraphWithROI_ColoredActivity' 'ByP'];
-    mysave(figGraph, fileName2);
-
+    plotGraphWithROI(gRoi, fileName2, nodesColor, {'Roi ByActivity cluster By P '});
+   
+    fig = figure;
+    plot(averageActivityForROIByH(roiSorted), '-*k');
+    xticks(1:length(selectedROI));
+    xtickangle(90);
+    xticklabels(selectedROI(roiSorted));
+    ylabel('mean df/f for cluster events by Hight');
+    mysave(fig, [outputpath, '\MeanActivityROI_' 'ByH']);
+    
+    fig = figure;
+    plot(averageActivityForROIByP(roiSorted), '-*k');
+    xticks(1:length(selectedROI));
+    xtickangle(90);
+    xticklabels(selectedROI(roiSorted));
+    ylabel('mean df/f for cluster events by Precentage');
+    mysave(fig, [outputpath, '\MeanActivityROI_' 'ByP']);
+       
+    fig = figure;
+    plot(averageActivityForROIByPT(roiSorted), '-*k');
+    xticks(1:length(selectedROI));
+    xtickangle(90);
+    xticklabels(selectedROI(roiSorted));
+    ylabel('mean df/f for cluster events by Precentage Threshold');
+    mysave(fig, [outputpath, '\MeanActivityROI_' 'ByPT']);
 end
 
 function locationToCompare = getLocTocompare(typeCom, clusterNum, all_event_table, indexByCluster, activitylocation)

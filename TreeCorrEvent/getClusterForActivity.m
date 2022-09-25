@@ -1,5 +1,5 @@
-function SpikeTrainClusterSecByData = getClusterForActivity(data, clusterCount)
-    SpikeTrainClusterByData = kmeans(data, clusterCount, 'Replicates',5, 'MaxIter', 500);
+function [SpikeTrainClusterSecByData] = getClusterForActivity(data, clusterCount)
+    [SpikeTrainClusterByData] = kmeans(data, clusterCount, 'Replicates',5, 'MaxIter', 500);
 
     clusterMaxValue = [];
     for i = 1:clusterCount

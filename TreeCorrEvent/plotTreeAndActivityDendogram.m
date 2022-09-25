@@ -14,7 +14,7 @@ function fileName = plotTreeAndActivityDendogram(outputpath, clusterType, activi
     fig.Color = [1,1,1];
     sb1 = subplot(6, 1, 5:6);
 
-    d = dendrogram(roiLinkage, 'Labels', selectedROI, 'reorder', roiSortedByCluster, 'Orientation', 'bottom');
+    d = dendrogram(roiLinkage,length(selectedROI), 'Labels', selectedROI, 'reorder', roiSortedByCluster, 'Orientation', 'bottom');
 %     ylim([0.5, length(selectedROI) + 0.5]);
     
     xlim([0.5,length(selectedROI)+0.5]);

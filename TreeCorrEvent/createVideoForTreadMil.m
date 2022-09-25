@@ -1,20 +1,23 @@
 function createVideoForTreadMil
-    activityDataLocation = 'C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM00\06.26.19_FreeRun\Analysis\N1\Structural_VS_Functional\27-10-20\Run1\no_behave\Pearson\SP\Behave_TreadMill\dataforvideo.mat';
-    behaveVideoLocation = 'D:\Layer V\Videos\SM00\2019-06-26_SM00_freerun_behavior\20190626_133512\trial0000.mkv';
-    outputpath = 'C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM00\06.26.19_FreeRun\Analysis\N1\Structural_VS_Functional\27-10-20\Run1\video\';
-    treadmilTxtFile = 'C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM00\06.26.19_FreeRun\SM00_06.26.19_FreeRun_Behavior.txt';
-    behaveTreadMil = 'C:\Users\Jackie\Dropbox (Technion Dropbox)\Yara\Layer 5_Analysis\Shay\SM00\06.26.19_FreeRun\Analysis\N1\Structural_VS_Functional\27-10-20\Run1\no_behave\Pearson\SP\BehaveTreadMilResults.mat';
+    activityDataLocation = '\\jackie-analysis\e\Shay\4481\2019-03-07_4481_motor_aligned\Analysis\N3\Structural_VS_Functional\final\Run2\no_behave\Pearson\SP\roiActivityRawData.mat';
+    behaveVideoLocation = 'F:\2019-03-07_4481\2019-03-07_4481_motor_behavior\trial0001.mkv';
+    outputpath = '\\jackie-analysis\e\Shay\4481\2019-03-07_4481_motor_aligned\Analysis\N3\';
+    treadmilTxtFile = 'F:\2019-03-07_4481\2019-03-07_4481_motor_behavior\trial0001_treadmill.txt';
+    behaveTreadMil = '\\jackie-analysis\e\Shay\4481\2019-03-07_4481_motor_aligned\Analysis\BehaveTreadMilOutput\BehaveTreadMilResults.mat';
     treadmilData = readtable(treadmilTxtFile);
    
     mkdir(outputpath);
     
     v_behave = VideoReader(behaveVideoLocation);
-    load(activityDataLocation, 'meanRoiActivity', 'speedB');
+    load(activityDataLocation, 'roiActivity');
+    meanRoiActivity = mean(roiActivity, 2);
+    
     load(behaveTreadMil, 'BehaveDataTreadmil');
+    speedB = BehaveDataTreadmil.speed;
     
     totalFrames = length(BehaveDataTreadmil.walkconstant) + length(BehaveDataTreadmil.walkacceleration);
     
-    vOut = VideoWriter([outputpath, '\behaveWithActivity_'],'MPEG-4');    
+    vOut = VideoWriter([outputpath, '\behaveWithActivity2_2.avi']);    
     
     frameIndex = sort([BehaveDataTreadmil.walkconstant; BehaveDataTreadmil.walkacceleration]);
     open(vOut);

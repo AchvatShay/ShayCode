@@ -1,4 +1,8 @@
-function color = getTreeColor(methodT, treeNum)
+function color = getTreeColor(methodT, treeNum, isMainSubTree, subTreeCountMain)
+    if ~isMainSubTree
+        treeNum = treeNum + subTreeCountMain;
+    end
+    
     switch methodT
         case 'ND'
             color = [0,0,0];
@@ -23,7 +27,11 @@ function color = getTreeColor(methodT, treeNum)
                 case 7
                     color = [176,196,222] ./ 255;
                 case 8
-                    color = [70,240,240] ./ 255;
+                    color = [70, 130, 180] ./ 255;
+                case 9
+                    color = [115, 194, 251] ./ 255;
+                case 10
+                    color = [250, 128, 114] ./ 255;
                 otherwise
                     color = [0,0,0];
             end
